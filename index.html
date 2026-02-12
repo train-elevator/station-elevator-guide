@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>乗車位置案内 - どの号車に乗る？</title>
+    <meta name="description" content="乗車駅と降車駅を入力するだけで、最適な号車を教えます。山手線対応。">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 14px;
+            font-weight: 400;
+        }
+        
+        .main {
+            padding: 30px 20px;
+        }
+        
+        .search-section {
+            margin-bottom: 20px;
+        }
+        
+        .search-label {
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .search-label .icon {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+        
+        .search-input-wrapper {
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .search-input::placeholder {
+            color: #999;
+        }
+        
+        .results-dropdown {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+        }
+        
+        .results-dropdown.show {
+            display: block;
+            animation: slideDown 0.2s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s ease;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result-item:hover {
+            background: #f8f9ff;
+        }
+        
+        .result-station {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        
+        .result-line {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .selected-station {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background: #f0f4ff;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .swap-button {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .swap-btn {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+        }
+        
+        .swap-btn:hover {
+            background: #f8f9ff;
+            border-color: #667eea;
+            transform: rotate(180deg);
+        }
+        
+        .submit-button {
+            margin-top: 30px;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .result-screen {
+            display: none;
+            padding: 40px 20px;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .result-screen.show {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .result-car-number {
+            font-size: 120px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+        
+        .result-car-label {
+            font-size: 36px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .result-divider {
+            width: 200px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #667eea, transparent);
+            margin: 0 auto 30px;
+        }
+        
+        .result-message {
+            font-size: 24px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 40px;
+        }
+        
+        .result-route {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        
+        .result-route-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .result-route-line {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .back-btn {
+            padding: 12px 30px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        
+        .back-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>乗車位置案内</h1>
+            <p>どの号車に乗ればいい？</p>
+        </div>
+        
+        <div class="main" id="searchScreen">
+            <div class="search-section">
+                <div class="search-label">
+                    <span class="icon">🚉</span>
+                    <span>乗る駅</span>
+                </div>
+                <div class="search-input-wrapper">
+                    <input type="text" class="search-input" id="fromInput" placeholder="駅名を入力（例：新宿）" autocomplete="off">
+                    <div class="results-dropdown" id="fromResults"></div>
+                </div>
+                <div id="fromSelected" class="selected-station" style="display: none;"></div>
+            </div>
+            
+            <div class="swap-button">
+                <button class="swap-btn" id="swapBtn">⇅</button>
+            </div>
+            
+            <div class="search-section">
+                <div class="search-label">
+                    <span class="icon">🎯</span>
+                    <span>降りる駅</span>
+                </div>
+                <div class="search-input-wrapper">
+                    <input type="text" class="search-input" id="toInput" placeholder="駅名を入力（例：渋谷）" autocomplete="off">
+                    <div class="results-dropdown" id="toResults"></div>
+                </div>
+                <div id="toSelected" class="selected-station" style="display: none;"></div>
+            </div>
+            
+            <div class="submit-button">
+                <button class="submit-btn" id="submitBtn" disabled>号車を検索</button>
+            </div>
+        </div>
+        
+        <div class="result-screen" id="resultScreen">
+            <div class="result-car-number" id="carNumber">5</div>
+            <div class="result-car-label">号車</div>
+            <div class="result-divider"></div>
+            <div class="result-message">に乗ろう</div>
+            <div class="result-route">
+                <div class="result-route-text" id="routeText">新宿 → 渋谷</div>
+                <div class="result-route-line" id="lineText">(JR山手線)</div>
+            </div>
+            <button class="back-btn" id="backBtn">戻る</button>
+        </div>
+    </div>
+
+    <script>
+        const stationsData = {
+            '東京': [{ id: 1, name: '東京', line: 'JR山手線', lineId: 'yamanote' }],
+            '有楽町': [{ id: 2, name: '有楽町', line: 'JR山手線', lineId: 'yamanote' }],
+            '新橋': [{ id: 3, name: '新橋', line: 'JR山手線', lineId: 'yamanote' }],
+            '浜松町': [{ id: 4, name: '浜松町', line: 'JR山手線', lineId: 'yamanote' }],
+            '田町': [{ id: 5, name: '田町', line: 'JR山手線', lineId: 'yamanote' }],
+            '品川': [{ id: 6, name: '品川', line: 'JR山手線', lineId: 'yamanote' }],
+            '大崎': [{ id: 7, name: '大崎', line: 'JR山手線', lineId: 'yamanote' }],
+            '五反田': [{ id: 8, name: '五反田', line: 'JR山手線', lineId: 'yamanote' }],
+            '目黒': [{ id: 9, name: '目黒', line: 'JR山手線', lineId: 'yamanote' }],
+            '恵比寿': [{ id: 10, name: '恵比寿', line: 'JR山手線', lineId: 'yamanote' }],
+            '渋谷': [{ id: 11, name: '渋谷', line: 'JR山手線', lineId: 'yamanote' }],
+            '原宿': [{ id: 12, name: '原宿', line: 'JR山手線', lineId: 'yamanote' }],
+            '代々木': [{ id: 13, name: '代々木', line: 'JR山手線', lineId: 'yamanote' }],
+            '新宿': [{ id: 14, name: '新宿', line: 'JR山手線', lineId: 'yamanote' }],
+            '新大久保': [{ id: 15, name: '新大久保', line: 'JR山手線', lineId: 'yamanote' }],
+            '高田馬場': [{ id: 16, name: '高田馬場', line: 'JR山手線', lineId: 'yamanote' }],
+            '目白': [{ id: 17, name: '目白', line: 'JR山手線', lineId: 'yamanote' }],
+            '池袋': [{ id: 18, name: '池袋', line: 'JR山手線', lineId: 'yamanote' }],
+            '大塚': [{ id: 19, name: '大塚', line: 'JR山手線', lineId: 'yamanote' }],
+            '巣鴨': [{ id: 20, name: '巣鴨', line: 'JR山手線', lineId: 'yamanote' }],
+            '駒込': [{ id: 21, name: '駒込', line: 'JR山手線', lineId: 'yamanote' }],
+            '田端': [{ id: 22, name: '田端', line: 'JR山手線', lineId: 'yamanote' }],
+            '西日暮里': [{ id: 23, name: '西日暮里', line: 'JR山手線', lineId: 'yamanote' }],
+            '日暮里': [{ id: 24, name: '日暮里', line: 'JR山手線', lineId: 'yamanote' }],
+            '鶯谷': [{ id: 25, name: '鶯谷', line: 'JR山手線', lineId: 'yamanote' }],
+            '上野': [{ id: 26, name: '上野', line: 'JR山手線', lineId: 'yamanote' }],
+            '御徒町': [{ id: 27, name: '御徒町', line: 'JR山手線', lineId: 'yamanote' }],
+            '秋葉原': [{ id: 28, name: '秋葉原', line: 'JR山手線', lineId: 'yamanote' }],
+            '神田': [{ id: 29, name: '神田', line: 'JR山手線', lineId: 'yamanote' }],
+            '高輪ゲートウェイ': [{ id: 30, name: '高輪ゲートウェイ', line: 'JR山手線', lineId: 'yamanote' }]
+        };
+
+        const carData = {
+            '14-11': { car: 5, line: 'JR山手線' }, '14-18': { car: 7, line: 'JR山手線' },
+            '14-1': { car: 6, line: 'JR山手線' }, '14-6': { car: 5, line: 'JR山手線' },
+            '14-26': { car: 8, line: 'JR山手線' }, '11-14': { car: 3, line: 'JR山手線' },
+            '11-18': { car: 6, line: 'JR山手線' }, '11-1': { car: 7, line: 'JR山手線' },
+            '11-6': { car: 4, line: 'JR山手線' }, '11-26': { car: 8, line: 'JR山手線' },
+            '18-14': { car: 4, line: 'JR山手線' }, '18-11': { car: 5, line: 'JR山手線' },
+            '18-1': { car: 6, line: 'JR山手線' }, '18-6': { car: 5, line: 'JR山手線' },
+            '18-26': { car: 7, line: 'JR山手線' }, '1-14': { car: 5, line: 'JR山手線' },
+            '1-11': { car: 4, line: 'JR山手線' }, '1-18': { car: 6, line: 'JR山手線' },
+            '1-6': { car: 3, line: 'JR山手線' }, '1-26': { car: 7, line: 'JR山手線' },
+            '6-14': { car: 6, line: 'JR山手線' }, '6-11': { car: 5, line: 'JR山手線' },
+            '6-18': { car: 7, line: 'JR山手線' }, '6-1': { car: 4, line: 'JR山手線' },
+            '6-26': { car: 8, line: 'JR山手線' }, '26-14': { car: 3, line: 'JR山手線' },
+            '26-11': { car: 4, line: 'JR山手線' }, '26-18': { car: 4, line: 'JR山手線' },
+            '26-1': { car: 5, line: 'JR山手線' }, '26-6': { car: 6, line: 'JR山手線' },
+            '10-11': { car: 2, line: 'JR山手線' }, '11-10': { car: 9, line: 'JR山手線' },
+            '28-1': { car: 3, line: 'JR山手線' }, '1-28': { car: 8, line: 'JR山手線' },
+            '3-1': { car: 3, line: 'JR山手線' }, '1-3': { car: 8, line: 'JR山手線' },
+            '12-11': { car: 3, line: 'JR山手線' }, '11-12': { car: 8, line: 'JR山手線' }
+        };
+
+        let selectedFrom = null;
+        let selectedTo = null;
+
+        const fromInput = document.getElementById('fromInput');
+        const toInput = document.getElementById('toInput');
+        const fromResults = document.getElementById('fromResults');
+        const toResults = document.getElementById('toResults');
+        const fromSelected = document.getElementById('fromSelected');
+        const toSelected = document.getElementById('toSelected');
+        const submitBtn = document.getElementById('submitBtn');
+        const searchScreen = document.getElementById('searchScreen');
+        const resultScreen = document.getElementById('resultScreen');
+        const backBtn = document.getElementById('backBtn');
+        const swapBtn = document.getElementById('swapBtn');
+
+        function searchStations(query, isFrom) {
+            if (!query) {
+                if (isFrom) {
+                    fromResults.innerHTML = '';
+                    fromResults.classList.remove('show');
+                } else {
+                    toResults.innerHTML = '';
+                    toResults.classList.remove('show');
+                }
+                return;
+            }
+
+            const results = Object.keys(stationsData)
+                .filter(station => station.includes(query))
+                .flatMap(station => stationsData[station]);
+
+            const resultsContainer = isFrom ? fromResults : toResults;
+            
+            if (results.length === 0) {
+                resultsContainer.innerHTML = '<div class="result-item">該当する駅が見つかりません</div>';
+            } else {
+                resultsContainer.innerHTML = results.map(station => `
+                    <div class="result-item" data-id="${station.id}" data-name="${station.name}" data-line="${station.line}">
+                        <div class="result-station">📍 ${station.name}</div>
+                        <div class="result-line">${station.line}</div>
+                    </div>
+                `).join('');
+
+                resultsContainer.querySelectorAll('.result-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const id = item.dataset.id;
+                        const name = item.dataset.name;
+                        const line = item.dataset.line;
+                        
+                        if (isFrom) {
+                            selectedFrom = { id, name, line };
+                            fromInput.value = name;
+                            fromSelected.textContent = `選択中: ${name} (${line})`;
+                            fromSelected.style.display = 'block';
+                            fromResults.classList.remove('show');
+                        } else {
+                            selectedTo = { id, name, line };
+                            toInput.value = name;
+                            toSelected.textContent = `選択中: ${name} (${line})`;
+                            toSelected.style.display = 'block';
+                            toResults.classList.remove('show');
+                        }
+                        
+                        checkSubmitButton();
+                    });
+                });
+            }
+            
+            resultsContainer.classList.add('show');
+        }
+
+        fromInput.addEventListener('input', (e) => {
+            searchStations(e.target.value, true);
+        });
+
+        toInput.addEventListener('input', (e) => {
+            searchStations(e.target.value, false);
+        });
+
+        swapBtn.addEventListener('click', () => {
+            [selectedFrom, selectedTo] = [selectedTo, selectedFrom];
+            [fromInput.value, toInput.value] = [toInput.value, fromInput.value];
+            
+            if (selectedFrom) {
+                fromSelected.textContent = `選択中: ${selectedFrom.name} (${selectedFrom.line})`;
+                fromSelected.style.display = 'block';
+            } else {
+                fromSelected.style.display = 'none';
+            }
+            
+            if (selectedTo) {
+                toSelected.textContent = `選択中: ${selectedTo.name} (${selectedTo.line})`;
+                toSelected.style.display = 'block';
+            } else {
+                toSelected.style.display = 'none';
+            }
+            
+            checkSubmitButton();
+        });
+
+        function checkSubmitButton() {
+            submitBtn.disabled = !(selectedFrom && selectedTo);
+        }
+
+        submitBtn.addEventListener('click', () => {
+            const key = `${selectedFrom.id}-${selectedTo.id}`;
+            const result = carData[key];
+            
+            if (result) {
+                document.getElementById('carNumber').textContent = result.car;
+                document.getElementById('routeText').textContent = `${selectedFrom.name} → ${selectedTo.name}`;
+                document.getElementById('lineText').textContent = `(${result.line})`;
+                
+                searchScreen.style.display = 'none';
+                resultScreen.classList.add('show');
+            } else {
+                alert('申し訳ありません。この区間のデータがまだ登録されていません。');
+            }
+        });
+
+        backBtn.addEventListener('click', () => {
+            resultScreen.classList.remove('show');
+            searchScreen.style.display = 'block';
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-input-wrapper')) {
+                fromResults.classList.remove('show');
+                toResults.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
