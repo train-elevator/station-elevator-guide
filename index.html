@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>乗車位置案内 - どの号車に乗る？</title>
-    <meta name="description" content="乗車駅と降車駅を入力するだけで、最適な号車を教えます。山手線対応。">
+    <meta name="description" content="乗車駅と降車駅を入力するだけで、最適な号車を教えます。山手線・京浜東北線・湘南新宿ライン対応。">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
         
@@ -321,7 +321,7 @@
                     <span>乗る駅</span>
                 </div>
                 <div class="search-input-wrapper">
-                    <input type="text" class="search-input" id="fromInput" placeholder="駅名を入力（例：新宿）" autocomplete="off">
+                    <input type="text" class="search-input" id="fromInput" placeholder="駅名を入力（例：浦和）" autocomplete="off">
                     <div class="results-dropdown" id="fromResults"></div>
                 </div>
                 <div id="fromSelected" class="selected-station" style="display: none;"></div>
@@ -354,8 +354,8 @@
             <div class="result-divider"></div>
             <div class="result-message">に乗ろう</div>
             <div class="result-route">
-                <div class="result-route-text" id="routeText">新宿 → 渋谷</div>
-                <div class="result-route-line" id="lineText">(JR山手線)</div>
+                <div class="result-route-text" id="routeText">浦和 → 渋谷</div>
+                <div class="result-route-line" id="lineText">(JR湘南新宿ライン)</div>
             </div>
             <button class="back-btn" id="backBtn">戻る</button>
         </div>
@@ -363,6 +363,7 @@
 
     <script>
         const stationsData = {
+            // 山手線（既存データ）
             '東京': [{ id: 1, name: '東京', line: 'JR山手線', lineId: 'yamanote' }],
             '有楽町': [{ id: 2, name: '有楽町', line: 'JR山手線', lineId: 'yamanote' }],
             '新橋': [{ id: 3, name: '新橋', line: 'JR山手線', lineId: 'yamanote' }],
@@ -373,7 +374,10 @@
             '五反田': [{ id: 8, name: '五反田', line: 'JR山手線', lineId: 'yamanote' }],
             '目黒': [{ id: 9, name: '目黒', line: 'JR山手線', lineId: 'yamanote' }],
             '恵比寿': [{ id: 10, name: '恵比寿', line: 'JR山手線', lineId: 'yamanote' }],
-            '渋谷': [{ id: 11, name: '渋谷', line: 'JR山手線', lineId: 'yamanote' }],
+            '渋谷': [
+                { id: 11, name: '渋谷', line: 'JR山手線', lineId: 'yamanote' },
+                { id: 104, name: '渋谷', line: 'JR湘南新宿ライン', lineId: 'shonan' }
+            ],
             '原宿': [{ id: 12, name: '原宿', line: 'JR山手線', lineId: 'yamanote' }],
             '代々木': [{ id: 13, name: '代々木', line: 'JR山手線', lineId: 'yamanote' }],
             '新宿': [{ id: 14, name: '新宿', line: 'JR山手線', lineId: 'yamanote' }],
@@ -392,10 +396,20 @@
             '御徒町': [{ id: 27, name: '御徒町', line: 'JR山手線', lineId: 'yamanote' }],
             '秋葉原': [{ id: 28, name: '秋葉原', line: 'JR山手線', lineId: 'yamanote' }],
             '神田': [{ id: 29, name: '神田', line: 'JR山手線', lineId: 'yamanote' }],
-            '高輪ゲートウェイ': [{ id: 30, name: '高輪ゲートウェイ', line: 'JR山手線', lineId: 'yamanote' }]
+            '高輪ゲートウェイ': [{ id: 30, name: '高輪ゲートウェイ', line: 'JR山手線', lineId: 'yamanote' }],
+            
+            // 浦和・大宮エリア追加
+            '浦和': [
+                { id: 101, name: '浦和', line: 'JR京浜東北線', lineId: 'keihin' },
+                { id: 103, name: '浦和', line: 'JR湘南新宿ライン', lineId: 'shonan' }
+            ],
+            '大宮': [
+                { id: 102, name: '大宮', line: 'JR京浜東北線', lineId: 'keihin' }
+            ]
         };
 
         const carData = {
+            // 山手線（既存データ）
             '14-11': { car: 5, line: 'JR山手線' }, '14-18': { car: 7, line: 'JR山手線' },
             '14-1': { car: 6, line: 'JR山手線' }, '14-6': { car: 5, line: 'JR山手線' },
             '14-26': { car: 8, line: 'JR山手線' }, '11-14': { car: 3, line: 'JR山手線' },
@@ -414,7 +428,13 @@
             '10-11': { car: 2, line: 'JR山手線' }, '11-10': { car: 9, line: 'JR山手線' },
             '28-1': { car: 3, line: 'JR山手線' }, '1-28': { car: 8, line: 'JR山手線' },
             '3-1': { car: 3, line: 'JR山手線' }, '1-3': { car: 8, line: 'JR山手線' },
-            '12-11': { car: 3, line: 'JR山手線' }, '11-12': { car: 8, line: 'JR山手線' }
+            '12-11': { car: 3, line: 'JR山手線' }, '11-12': { car: 8, line: 'JR山手線' },
+            
+            // 浦和・大宮エリア追加
+            '101-102': { car: 5, line: 'JR京浜東北線' },  // 浦和→大宮
+            '102-101': { car: 5, line: 'JR京浜東北線' },  // 大宮→浦和
+            '103-104': { car: 3, line: 'JR湘南新宿ライン' },  // 浦和→渋谷
+            '104-103': { car: 11, line: 'JR湘南新宿ライン' }  // 渋谷→浦和
         };
 
         let selectedFrom = null;
