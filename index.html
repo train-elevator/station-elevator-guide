@@ -328,7 +328,7 @@
             </div>
             
             <div class="swap-button">
-                <button class="swap-btn" id="swapBtn">⇅</button>
+                <button class="swap-btn" id="swapBtn">↓</button>
             </div>
             
             <div class="search-section">
@@ -453,7 +453,7 @@
         const swapBtn = document.getElementById('swapBtn');
 
         function searchStations(query, isFrom) {
-            if (!query) {
+            if (!query || query.length < 2) {
                 if (isFrom) {
                     fromResults.innerHTML = '';
                     fromResults.classList.remove('show');
@@ -464,9 +464,17 @@
                 return;
             }
 
-            const results = Object.keys(stationsData)
+            let results = Object.keys(stationsData)
                 .filter(station => station.includes(query))
                 .flatMap(station => stationsData[station]);
+
+            // 降りる駅の場合、乗る駅と同じ路線を優先
+            if (!isFrom && selectedFrom) {
+                const sameLineResults = results.filter(s => s.line === selectedFrom.line);
+                if (sameLineResults.length > 0) {
+                    results = sameLineResults;
+                }
+            }
 
             const resultsContainer = isFrom ? fromResults : toResults;
             
