@@ -453,7 +453,7 @@
         const swapBtn = document.getElementById('swapBtn');
 
         function searchStations(query, isFrom) {
-            if (!query || query.length < 2) {
+            if (!query) {
                 if (isFrom) {
                     fromResults.innerHTML = '';
                     fromResults.classList.remove('show');
@@ -478,8 +478,10 @@
 
             const resultsContainer = isFrom ? fromResults : toResults;
             
+            // Yahoo!スタイル：候補がない時は何も表示しない
             if (results.length === 0) {
-                resultsContainer.innerHTML = '<div class="result-item">該当する駅が見つかりません</div>';
+                resultsContainer.innerHTML = '';
+                resultsContainer.classList.remove('show');
             } else {
                 resultsContainer.innerHTML = results.map(station => `
                     <div class="result-item" data-id="${station.id}" data-name="${station.name}" data-line="${station.line}">
@@ -511,9 +513,9 @@
                         checkSubmitButton();
                     });
                 });
+                
+                resultsContainer.classList.add('show');
             }
-            
-            resultsContainer.classList.add('show');
         }
 
         fromInput.addEventListener('input', (e) => {
