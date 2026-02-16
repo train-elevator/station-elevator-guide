@@ -3,579 +3,1765 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>乗車位置案内 - どの号車に乗る？</title>
-    <meta name="description" content="乗車駅と降車駅を入力するだけで、最適な号車を教えます。山手線・京浜東北線・湘南新宿ライン対応。">
+    <title>乗車位置案内 - どの号車に乗ればいい？</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
-        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 20px;
         }
-        
+
         .container {
-            width: 100%;
-            max-width: 480px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
+            max-width: 500px;
+            margin: 0 auto;
         }
-        
+
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 25px 20px;
             text-align: center;
-        }
-        
-        .header h1 {
             color: white;
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 5px;
+            margin-bottom: 30px;
         }
-        
-        .header p {
-            color: rgba(255,255,255,0.9);
-            font-size: 14px;
-            font-weight: 400;
-        }
-        
-        .main {
-            padding: 30px 20px;
-        }
-        
-        .search-section {
-            margin-bottom: 20px;
-        }
-        
-        .search-label {
-            display: flex;
-            align-items: center;
-            font-size: 15px;
-            font-weight: 500;
-            color: #333;
+
+        .header h1 {
+            font-size: 28px;
             margin-bottom: 10px;
         }
-        
-        .search-label .icon {
-            font-size: 20px;
-            margin-right: 8px;
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
         }
-        
-        .search-input-wrapper {
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
             position: relative;
         }
-        
-        .search-input {
+
+        .clear-button {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #e0e0e0;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .clear-button:hover {
+            background: #d0d0d0;
+            color: #333;
+        }
+
+        .clear-button.show {
+            display: flex;
+        }
+
+        input[type="text"] {
             width: 100%;
-            padding: 15px 20px;
-            font-size: 16px;
+            padding: 15px;
             border: 2px solid #e0e0e0;
             border-radius: 12px;
-            transition: all 0.3s ease;
-            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 16px;
+            transition: all 0.3s;
         }
-        
-        .search-input:focus {
+
+        input[type="text"]:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
-        
-        .search-input::placeholder {
-            color: #999;
-        }
-        
-        .results-dropdown {
+
+        .dropdown {
             position: absolute;
-            top: calc(100% + 5px);
+            top: 100%;
             left: 0;
             right: 0;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border: 2px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
             max-height: 300px;
             overflow-y: auto;
-            z-index: 10;
+            z-index: 1000;
             display: none;
+            margin-top: -10px;
         }
-        
-        .results-dropdown.show {
+
+        .dropdown.show {
             display: block;
-            animation: slideDown 0.2s ease;
         }
-        
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .result-item {
-            padding: 15px 20px;
+
+        .dropdown-item {
+            padding: 15px;
             cursor: pointer;
+            transition: background 0.2s;
             border-bottom: 1px solid #f0f0f0;
-            transition: background 0.2s ease;
         }
-        
-        .result-item:last-child {
+
+        .dropdown-item:last-child {
             border-bottom: none;
         }
-        
-        .result-item:hover {
+
+        .dropdown-item:hover {
             background: #f8f9ff;
         }
-        
-        .result-station {
-            font-size: 15px;
+
+        .dropdown-item .station-name {
+            font-size: 16px;
             font-weight: 500;
             color: #333;
-            margin-bottom: 3px;
+            margin-bottom: 4px;
         }
-        
-        .result-line {
-            font-size: 13px;
-            color: #666;
-        }
-        
-        .selected-station {
-            margin-top: 10px;
-            padding: 10px 15px;
-            background: #f0f4ff;
-            border-radius: 8px;
+
+        .dropdown-item .line-name {
             font-size: 13px;
             color: #667eea;
-            font-weight: 500;
         }
-        
-        .swap-button {
-            display: flex;
-            justify-content: center;
-            margin: 15px 0;
-        }
-        
-        .swap-btn {
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 20px;
-        }
-        
-        .swap-btn:hover {
-            background: #f8f9ff;
-            border-color: #667eea;
-            transform: rotate(180deg);
-        }
-        
-        .submit-button {
-            margin-top: 30px;
-        }
-        
-        .submit-btn {
+
+        .search-button {
             width: 100%;
             padding: 18px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
+            font-size: 18px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Noto Sans JP', sans-serif;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
         }
-        
-        .submit-btn:hover {
+
+        .search-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
-        
-        .submit-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+
+        .search-button:active {
+            transform: translateY(0);
         }
-        
-        .result-screen {
+
+        .result {
             display: none;
-            padding: 40px 20px;
             text-align: center;
-            animation: fadeIn 0.5s ease;
+            padding-top: 20px;
         }
-        
-        .result-screen.show {
+
+        .result.show {
             display: block;
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .result-car-number {
-            font-size: 120px;
+
+        .result-car {
+            font-size: 48px;
             font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1;
-            margin-bottom: 10px;
-        }
-        
-        .result-car-label {
-            font-size: 36px;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 30px;
-        }
-        
-        .result-divider {
-            width: 200px;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, #667eea, transparent);
-            margin: 0 auto 30px;
-        }
-        
-        .result-message {
-            font-size: 24px;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 40px;
-        }
-        
-        .result-route {
-            background: #f8f9ff;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-        }
-        
-        .result-route-text {
-            font-size: 18px;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .result-route-line {
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .back-btn {
-            padding: 12px 30px;
-            background: white;
             color: #667eea;
-            border: 2px solid #667eea;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Noto Sans JP', sans-serif;
+            margin: 20px 0;
+            line-height: 1.2;
         }
-        
-        .back-btn:hover {
+
+        .direction-group {
+            margin: 25px 0;
+        }
+
+        .direction-header {
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .group-divider {
+            height: 3px;
             background: #667eea;
-            color: white;
+            margin: 25px 0;
+            border-radius: 2px;
+        }
+
+        .car-option {
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+            border: 2px solid #667eea;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            transition: all 0.3s;
+        }
+
+        .car-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+            border-color: #764ba2;
+        }
+
+        .car-number {
+            font-size: 48px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .car-label {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .result-text {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .result-note {
+            font-size: 14px;
+            color: #999;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9ff;
+            border-radius: 12px;
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>乗車位置案内</h1>
+            <h1>🚃 乗車位置案内</h1>
             <p>どの号車に乗ればいい？</p>
         </div>
-        
-        <div class="main" id="searchScreen">
-            <div class="search-section">
-                <div class="search-label">
-                    <span class="icon">🚉</span>
-                    <span>乗る駅</span>
+
+        <div class="card">
+            <div class="input-group">
+                <label>🎯 降りる駅</label>
+                <div class="input-wrapper">
+                    <input type="text" id="destination-input" placeholder="駅名を入力（例：渋谷）" autocomplete="off">
+                    <button class="clear-button" id="clear-button">✕</button>
+                    <div class="dropdown" id="destination-dropdown"></div>
                 </div>
-                <div class="search-input-wrapper">
-                    <input type="text" class="search-input" id="fromInput" placeholder="駅名を入力（例：浦和）" autocomplete="off">
-                    <div class="results-dropdown" id="fromResults"></div>
-                </div>
-                <div id="fromSelected" class="selected-station" style="display: none;"></div>
             </div>
+
+            <button class="search-button" id="search-button">号車を検索</button>
             
-            <div class="swap-button">
-                <button class="swap-btn" id="swapBtn">↓</button>
+            <div class="error" id="error-message"></div>
+
+            <div class="result" id="result">
+                <div class="result-car" id="result-car"></div>
+                <div class="result-text">に乗ろう！</div>
+                <div class="result-note" id="result-note"></div>
             </div>
-            
-            <div class="search-section">
-                <div class="search-label">
-                    <span class="icon">🎯</span>
-                    <span>降りる駅</span>
-                </div>
-                <div class="search-input-wrapper">
-                    <input type="text" class="search-input" id="toInput" placeholder="駅名を入力（例：渋谷）" autocomplete="off">
-                    <div class="results-dropdown" id="toResults"></div>
-                </div>
-                <div id="toSelected" class="selected-station" style="display: none;"></div>
-            </div>
-            
-            <div class="submit-button">
-                <button class="submit-btn" id="submitBtn" disabled>号車を検索</button>
-            </div>
-        </div>
-        
-        <div class="result-screen" id="resultScreen">
-            <div class="result-car-number" id="carNumber">5</div>
-            <div class="result-car-label">号車</div>
-            <div class="result-divider"></div>
-            <div class="result-message">に乗ろう</div>
-            <div class="result-route">
-                <div class="result-route-text" id="routeText">浦和 → 渋谷</div>
-                <div class="result-route-line" id="lineText">(JR湘南新宿ライン)</div>
-            </div>
-            <button class="back-btn" id="backBtn">戻る</button>
         </div>
     </div>
 
     <script>
-        const stationsData = {
-            // 山手線（既存データ）
-            '東京': [{ id: 1, name: '東京', line: 'JR山手線', lineId: 'yamanote' }],
-            '有楽町': [{ id: 2, name: '有楽町', line: 'JR山手線', lineId: 'yamanote' }],
-            '新橋': [{ id: 3, name: '新橋', line: 'JR山手線', lineId: 'yamanote' }],
-            '浜松町': [{ id: 4, name: '浜松町', line: 'JR山手線', lineId: 'yamanote' }],
-            '田町': [{ id: 5, name: '田町', line: 'JR山手線', lineId: 'yamanote' }],
-            '品川': [{ id: 6, name: '品川', line: 'JR山手線', lineId: 'yamanote' }],
-            '大崎': [{ id: 7, name: '大崎', line: 'JR山手線', lineId: 'yamanote' }],
-            '五反田': [{ id: 8, name: '五反田', line: 'JR山手線', lineId: 'yamanote' }],
-            '目黒': [{ id: 9, name: '目黒', line: 'JR山手線', lineId: 'yamanote' }],
-            '恵比寿': [{ id: 10, name: '恵比寿', line: 'JR山手線', lineId: 'yamanote' }],
-            '渋谷': [
-                { id: 11, name: '渋谷', line: 'JR山手線', lineId: 'yamanote' },
-                { id: 104, name: '渋谷', line: 'JR湘南新宿ライン', lineId: 'shonan' }
-            ],
-            '原宿': [{ id: 12, name: '原宿', line: 'JR山手線', lineId: 'yamanote' }],
-            '代々木': [{ id: 13, name: '代々木', line: 'JR山手線', lineId: 'yamanote' }],
-            '新宿': [{ id: 14, name: '新宿', line: 'JR山手線', lineId: 'yamanote' }],
-            '新大久保': [{ id: 15, name: '新大久保', line: 'JR山手線', lineId: 'yamanote' }],
-            '高田馬場': [{ id: 16, name: '高田馬場', line: 'JR山手線', lineId: 'yamanote' }],
-            '目白': [{ id: 17, name: '目白', line: 'JR山手線', lineId: 'yamanote' }],
-            '池袋': [{ id: 18, name: '池袋', line: 'JR山手線', lineId: 'yamanote' }],
-            '大塚': [{ id: 19, name: '大塚', line: 'JR山手線', lineId: 'yamanote' }],
-            '巣鴨': [{ id: 20, name: '巣鴨', line: 'JR山手線', lineId: 'yamanote' }],
-            '駒込': [{ id: 21, name: '駒込', line: 'JR山手線', lineId: 'yamanote' }],
-            '田端': [{ id: 22, name: '田端', line: 'JR山手線', lineId: 'yamanote' }],
-            '西日暮里': [{ id: 23, name: '西日暮里', line: 'JR山手線', lineId: 'yamanote' }],
-            '日暮里': [{ id: 24, name: '日暮里', line: 'JR山手線', lineId: 'yamanote' }],
-            '鶯谷': [{ id: 25, name: '鶯谷', line: 'JR山手線', lineId: 'yamanote' }],
-            '上野': [{ id: 26, name: '上野', line: 'JR山手線', lineId: 'yamanote' }],
-            '御徒町': [{ id: 27, name: '御徒町', line: 'JR山手線', lineId: 'yamanote' }],
-            '秋葉原': [{ id: 28, name: '秋葉原', line: 'JR山手線', lineId: 'yamanote' }],
-            '神田': [{ id: 29, name: '神田', line: 'JR山手線', lineId: 'yamanote' }],
-            '高輪ゲートウェイ': [{ id: 30, name: '高輪ゲートウェイ', line: 'JR山手線', lineId: 'yamanote' }],
+        // データベース（降りる駅ごとのエレベーター位置）
+        const stationData = {
+            // 山手線
+            '東京-yamanote-outer-south': {
+                car: 1,
+                line: 'JR山手線（外回り）八重洲南口・丸の内南口方面',
+                note: '八重洲南口・丸の内南口方面'
+            },
+            '東京-yamanote-outer-north': {
+                car: 9,
+                line: 'JR山手線（外回り）八重洲北口・丸の内北口方面',
+                note: '八重洲北口・丸の内北口方面'
+            },
+            '東京-yamanote-inner-north': {
+                car: 9,
+                line: 'JR山手線（内回り）八重洲北口・丸の内北口方面',
+                note: '八重洲北口・丸の内北口方面'
+            },
+            '東京-yamanote-inner-south': {
+                car: 2,
+                line: 'JR山手線（内回り）八重洲南口・丸の内南口方面',
+                note: '八重洲南口・丸の内南口方面'
+            },
+            '神田-yamanote-outer-west': {
+                car: 1,
+                line: 'JR山手線（外回り）西口・南口方面',
+                note: '西口・南口方面'
+            },
+            '神田-yamanote-outer-east': {
+                car: 5,
+                line: 'JR山手線（外回り）東口・北口方面',
+                note: '東口・北口方面'
+            },
+            '神田-yamanote-inner-east': {
+                car: 10,
+                line: 'JR山手線（内回り）東口・北口方面',
+                note: '東口・北口方面'
+            },
+            '神田-yamanote-inner-west': {
+                car: 3,
+                line: 'JR山手線（内回り）西口・南口方面',
+                note: '西口・南口方面'
+            },
+            '秋葉原-yamanote-outer': {
+                car: 6,
+                line: 'JR山手線（外回り）',
+                note: 'エレベーター付近'
+            },
+            '秋葉原-yamanote-inner': {
+                car: 4,
+                line: 'JR山手線（内回り）',
+                note: 'エレベーター付近'
+            },
+            '御徒町-yamanote-outer-south': {
+                car: 3,
+                line: 'JR山手線（外回り）南口改札方面',
+                note: '南口改札方面'
+            },
+            '御徒町-yamanote-outer-north': {
+                car: 6,
+                line: 'JR山手線（外回り）北口改札方面',
+                note: '北口改札方面'
+            },
+            '御徒町-yamanote-inner-north': {
+                car: 7,
+                line: 'JR山手線（内回り）北口改札方面',
+                note: '北口改札方面'
+            },
+            '御徒町-yamanote-inner-south': {
+                car: 4,
+                line: 'JR山手線（内回り）南口改札方面',
+                note: '南口改札方面'
+            },
+            '上野-yamanote-outer': {
+                car: 8,
+                line: 'JR山手線（外回り）',
+                note: 'エレベーター付近'
+            },
+            '上野-yamanote-inner': {
+                car: 9,
+                line: 'JR山手線（内回り）',
+                note: 'エレベーター付近'
+            },
+            '鶯谷-yamanote-outer': {
+                car: 1,
+                line: 'JR山手線（外回り）',
+                note: 'エレベーター付近'
+            },
+            '鶯谷-yamanote-inner': {
+                car: 2,
+                line: 'JR山手線（内回り）',
+                note: 'エレベーター付近'
+            },
+            '日暮里-yamanote-outer-1': {
+                car: 6,
+                line: 'JR山手線（外回り）',
+                note: 'エレベーター付近'
+            },
+            '日暮里-yamanote-outer-2': {
+                car: 9,
+                line: 'JR山手線（外回り）',
+                note: 'エレベーター付近'
+            },
+            '日暮里-yamanote-inner-1': {
+                car: 9,
+                line: 'JR山手線（内回り）',
+                note: 'エレベーター付近'
+            },
+            '日暮里-yamanote-inner-2': {
+                car: 11,
+                line: 'JR山手線（内回り）',
+                note: 'エレベーター付近'
+            },
+            '西日暮里-yamanote': {
+                car: 4,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '田端-yamanote': {
+                car: 11,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '駒込-yamanote': {
+                car: 11,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '巣鴨-yamanote': {
+                car: 8,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '大塚-yamanote': {
+                car: 5,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '池袋-yamanote-outer': {
+                car: 7,
+                line: 'JR山手線（外回り）',
+                note: 'エレベーター付近'
+            },
+            '池袋-yamanote-inner': {
+                car: 9,
+                line: 'JR山手線（内回り）',
+                note: 'エレベーター付近'
+            },
+            '目白-yamanote': {
+                car: 1,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '高田馬場-yamanote': {
+                car: 5,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '新大久保-yamanote': {
+                car: 5,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '新宿-yamanote-east': {
+                car: 4,
+                line: 'JR山手線（東口改札・西口改札方面）',
+                note: '東口改札・西口改札方面'
+            },
+            '新宿-yamanote-south': {
+                car: 11,
+                line: 'JR山手線（東南口改札・南口改札・小田急線のりかえ専用口方面）',
+                note: '東南口改札・南口改札・小田急線のりかえ専用口方面'
+            },
+            '代々木-yamanote': {
+                car: 9,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '原宿-yamanote-outer': {
+                car: 10,
+                line: 'JR山手線（外回り）',
+                note: 'エレベーター付近'
+            },
+            '原宿-yamanote-inner': {
+                car: 6,
+                line: 'JR山手線（内回り）',
+                note: 'エレベーター付近'
+            },
+            '渋谷-yamanote': {
+                car: 8,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '恵比寿-yamanote': {
+                car: 4,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '目黒-yamanote-outer': {
+                car: 6,
+                line: 'JR山手線（外回り）',
+                note: 'エレベーター付近'
+            },
+            '目黒-yamanote-inner': {
+                car: 5,
+                line: 'JR山手線（内回り）',
+                note: 'エレベーター付近'
+            },
+            '五反田-yamanote': {
+                car: 8,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '大崎-yamanote-outer': {
+                car: 9,
+                line: 'JR山手線（外回り）',
+                note: 'エレベーター付近'
+            },
+            '大崎-yamanote-inner': {
+                car: 7,
+                line: 'JR山手線（内回り）',
+                note: 'エレベーター付近'
+            },
+            '品川-yamanote-outer': {
+                car: 4,
+                line: 'JR山手線（外回り）',
+                note: 'エレベーター付近'
+            },
+            '品川-yamanote-inner': {
+                car: 5,
+                line: 'JR山手線（内回り）',
+                note: 'エレベーター付近'
+            },
+            '高輪ゲートウェイ-yamanote-1': {
+                car: 4,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '高輪ゲートウェイ-yamanote-2': {
+                car: 8,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '田町-yamanote-outer': {
+                car: 3,
+                line: 'JR山手線（外回り）',
+                note: 'エレベーター付近'
+            },
+            '田町-yamanote-inner': {
+                car: 5,
+                line: 'JR山手線（内回り）',
+                note: 'エレベーター付近'
+            },
+            '浜松町-yamanote': {
+                car: 9,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '新橋-yamanote': {
+                car: 5,
+                line: 'JR山手線',
+                note: 'エレベーター付近'
+            },
+            '有楽町-yamanote-outer': {
+                car: 6,
+                line: 'JR山手線（外回り・3番線）',
+                note: '外回り・3番線'
+            },
+            '有楽町-yamanote-inner': {
+                car: 7,
+                line: 'JR山手線（内回り・2番線）',
+                note: '内回り・2番線'
+            },
+
+            // 京浜東北線
+            'さいたま新都心-keihin': {
+                car: 6,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '与野-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '北浦和-keihin': {
+                car: 4,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '浦和-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '南浦和-keihin-ofuna': {
+                car: 2,
+                line: 'JR京浜東北線（大船方面）',
+                note: '大船方面'
+            },
+            '南浦和-keihin-omiya': {
+                car: 3,
+                line: 'JR京浜東北線（大宮方面）',
+                note: '大宮方面'
+            },
+            '蕨-keihin': {
+                car: 4,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '西川口-keihin': {
+                car: 7,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '川口-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '赤羽-keihin': {
+                car: 1,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '東十条-keihin': {
+                car: 10,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '王子-keihin': {
+                car: 10,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '上中里-keihin': {
+                car: 1,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '田端-keihin': {
+                car: 10,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '西日暮里-keihin': {
+                car: 4,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '日暮里-keihin-ofuna-1': {
+                car: 6,
+                line: 'JR京浜東北線（大船方面）',
+                note: 'エレベーター付近'
+            },
+            '日暮里-keihin-ofuna-2': {
+                car: 9,
+                line: 'JR京浜東北線（大船方面）',
+                note: 'エレベーター付近'
+            },
+            '日暮里-keihin-omiya-1': {
+                car: 8,
+                line: 'JR京浜東北線（大宮方面）',
+                note: 'エレベーター付近'
+            },
+            '日暮里-keihin-omiya-2': {
+                car: 10,
+                line: 'JR京浜東北線（大宮方面）',
+                note: 'エレベーター付近'
+            },
+            '鶯谷-keihin': {
+                car: 1,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '上野-keihin-ofuna': {
+                car: 8,
+                line: 'JR京浜東北線（大船方面）',
+                note: 'エレベーター付近'
+            },
+            '上野-keihin-omiya': {
+                car: 9,
+                line: 'JR京浜東北線（大宮方面）',
+                note: 'エレベーター付近'
+            },
+            '御徒町-keihin-iriya': {
+                car: 3,
+                line: 'JR京浜東北線',
+                note: '入谷改札・公園改札方面'
+            },
+            '御徒町-keihin-kita': {
+                car: 7,
+                line: 'JR京浜東北線',
+                note: '北口改札方面'
+            },
+            '秋葉原-keihin-ofuna': {
+                car: 6,
+                line: 'JR京浜東北線（大船方面）',
+                note: 'エレベーター付近'
+            },
+            '秋葉原-keihin-omiya': {
+                car: 4,
+                line: 'JR京浜東北線（大宮方面）',
+                note: 'エレベーター付近'
+            },
+            '神田-keihin-ofuna-south': {
+                car: 1,
+                line: 'JR京浜東北線（大船方面）南改札方面',
+                note: '南改札方面'
+            },
+            '神田-keihin-ofuna-north': {
+                car: 5,
+                line: 'JR京浜東北線（大船方面）北改札方面',
+                note: '北改札方面'
+            },
+            '神田-keihin-omiya-south': {
+                car: 5,
+                line: 'JR京浜東北線（大宮方面）南改札方面',
+                note: '南改札方面'
+            },
+            '神田-keihin-omiya-north': {
+                car: 10,
+                line: 'JR京浜東北線（大宮方面）北改札方面',
+                note: '北改札方面'
+            },
+            '東京-keihin-ofuna-south': {
+                car: 1,
+                line: 'JR京浜東北線（大船方面）八重洲南口・丸の内南口方面',
+                note: '八重洲南口・丸の内南口方面'
+            },
+            '東京-keihin-ofuna-north': {
+                car: 9,
+                line: 'JR京浜東北線（大船方面）八重洲北口・丸の内北口方面',
+                note: '八重洲北口・丸の内北口方面'
+            },
+            '有楽町-keihin-ofuna-ginza': {
+                car: 4,
+                line: 'JR京浜東北線（大船方面）銀座口・日比谷口方面',
+                note: '銀座口・日比谷口方面'
+            },
+            '有楽町-keihin-ofuna-forum': {
+                car: 6,
+                line: 'JR京浜東北線（大船方面）国際フォーラム口・京橋口方面',
+                note: '国際フォーラム口・京橋口方面'
+            },
+            '有楽町-keihin-omiya': {
+                car: 7,
+                line: 'JR京浜東北線（大宮方面）銀座口・日比谷口方面',
+                note: '銀座口・日比谷口方面'
+            },
+            '新橋-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '浜松町-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '田町-keihin-ofuna': {
+                car: 2,
+                line: 'JR京浜東北線（大船方面）',
+                note: 'エレベーター付近'
+            },
+            '田町-keihin-omiya': {
+                car: 4,
+                line: 'JR京浜東北線（大宮方面）',
+                note: 'エレベーター付近'
+            },
+            '高輪ゲートウェイ-keihin-1': {
+                car: 4,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '高輪ゲートウェイ-keihin-2': {
+                car: 8,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '品川-keihin': {
+                car: 3,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '大井町-keihin': {
+                car: 7,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '大森-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '蒲田-keihin': {
+                car: 7,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '川崎-keihin-1': {
+                car: 3,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '川崎-keihin-2': {
+                car: 8,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '鶴見-keihin': {
+                car: 4,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '新子安-keihin': {
+                car: 9,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '東神奈川-keihin': {
+                car: 7,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '横浜-keihin-south': {
+                car: 2,
+                line: 'JR京浜東北線',
+                note: '南改札方面'
+            },
+            '横浜-keihin-center': {
+                car: 6,
+                line: 'JR京浜東北線',
+                note: '中央北改札方面'
+            },
+            '桜木町-keihin': {
+                car: 6,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '関内-keihin': {
+                car: 9,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '石川町-keihin-motomachi': {
+                car: 2,
+                line: 'JR京浜東北線',
+                note: '元町口方面'
+            },
+            '石川町-keihin-chukagai': {
+                car: 9,
+                line: 'JR京浜東北線',
+                note: '中華街口方面'
+            },
+            '山手-keihin': {
+                car: 8,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '根岸-keihin': {
+                car: 2,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '磯子-keihin': {
+                car: 2,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '新杉田-keihin-ofuna': {
+                car: 5,
+                line: 'JR京浜東北線（大船方面）',
+                note: 'エレベーター付近'
+            },
+            '新杉田-keihin-omiya': {
+                car: 6,
+                line: 'JR京浜東北線（大宮方面）',
+                note: 'エレベーター付近'
+            },
+            '洋光台-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '港南台-keihin': {
+                car: 7,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '本郷台-keihin-ofuna': {
+                car: 5,
+                line: 'JR京浜東北線（大船方面）',
+                note: 'エレベーター付近'
+            },
+            '本郷台-keihin-omiya': {
+                car: 6,
+                line: 'JR京浜東北線（大宮方面）',
+                note: 'エレベーター付近'
+            },
+            '大船-keihin': {
+                car: 8,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
             
-            // 浦和・大宮エリア追加
-            '浦和': [
-                { id: 101, name: '浦和', line: 'JR京浜東北線', lineId: 'keihin' },
-                { id: 103, name: '浦和', line: 'JR湘南新宿ライン', lineId: 'shonan' }
-            ],
-            '大宮': [
-                { id: 102, name: '大宮', line: 'JR京浜東北線', lineId: 'keihin' }
-            ]
+            // 湘南新宿ライン
+            '浦和-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '浦和-shonan-omiya': {
+                car: 8,
+                line: 'JR湘南新宿ライン（大宮方面から）',
+                note: 'エレベーター付近'
+            },
+            '浦和-shonan-yokohama': {
+                car: 11,
+                line: 'JR湘南新宿ライン（横浜方面から）',
+                note: 'エレベーター付近'
+            },
+            '大宮-keihin': {
+                car: 3,
+                line: 'JR京浜東北線',
+                note: 'エレベーター付近'
+            },
+            '渋谷-shonan': {
+                car: 3,
+                line: 'JR湘南新宿ライン',
+                note: 'エレベーター付近'
+            },
+
+            // 埼京線
+            '川越-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '南古谷-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '指扇-saikyo': {
+                car: 7,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '西大宮-saikyo': {
+                car: 5,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '日進-saikyo': {
+                car: 4,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '大宮-saikyo': {
+                car: 7,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '北与野-saikyo': {
+                car: 8,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '与野本町-saikyo': {
+                car: 4,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '南与野-saikyo': {
+                car: 3,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '中浦和-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '武蔵浦和-saikyo': {
+                car: 4,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '北戸田-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '戸田-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '戸田公園-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '浮間舟渡-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '北赤羽-saikyo': {
+                car: 1,
+                line: 'JR埼京線',
+                note: '1号車または10号車'
+            },
+            '赤羽-saikyo': {
+                car: 10,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '板橋-saikyo': {
+                car: 1,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '池袋-saikyo': {
+                car: 7,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '新宿-saikyo-south': {
+                car: 5,
+                line: 'JR埼京線（新木場・海老名・大崎方面）東南改札・南改札方面',
+                note: '東南改札・南改札・小田急線のりかえ専用口方面'
+            },
+            '新宿-saikyo-south-kosha': {
+                car: 9,
+                line: 'JR埼京線（新木場・海老名・大崎方面）甲州街道改札方面',
+                note: '甲州街道改札・新南改札方面'
+            },
+            '新宿-saikyo-north': {
+                car: 1,
+                line: 'JR埼京線（武蔵浦和・大宮方面）東南改札・南改札方面',
+                note: '東南改札・南改札・小田急線のりかえ専用口方面'
+            },
+            '新宿-saikyo-north-kosha': {
+                car: 6,
+                line: 'JR埼京線（武蔵浦和・大宮方面）甲州街道改札方面',
+                note: '甲州街道改札・新南改札方面'
+            },
+            '渋谷-saikyo-shinnan': {
+                car: 9,
+                line: 'JR埼京線（新南改札方面）',
+                note: '新南改札方面'
+            },
+            '渋谷-saikyo-central': {
+                car: 3,
+                line: 'JR埼京線（中央改札方面）',
+                note: '中央改札・中央東改札、南改札方面'
+            },
+            '渋谷-saikyo-hachiko': {
+                car: 1,
+                line: 'JR埼京線（ハチ公改札方面）',
+                note: 'ハチ公改札方面'
+            },
+            '恵比寿-saikyo': {
+                car: 4,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '大崎-saikyo': {
+                car: 5,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '西大井-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '武蔵小杉-saikyo': {
+                car: 3,
+                line: 'JR埼京線',
+                note: 'エレベーター付近'
+            },
+            '羽沢横浜国大-saikyo-8': {
+                car: 3,
+                line: 'JR埼京線（8両編成）',
+                note: '8両編成の場合'
+            },
+            '羽沢横浜国大-saikyo-10': {
+                car: 5,
+                line: 'JR埼京線（10両編成）',
+                note: '10両編成の場合'
+            },
+
+            // りんかい線
+            '大崎-rinkai': {
+                car: 5,
+                line: 'りんかい線',
+                note: 'エレベーター付近'
+            },
+            '大井町-rinkai': {
+                car: 6,
+                line: 'りんかい線',
+                note: 'エレベーター付近'
+            },
+            '品川シーサイド-rinkai': {
+                car: 4,
+                line: 'りんかい線',
+                note: 'エレベーター付近'
+            },
+            '天王洲アイル-rinkai': {
+                car: 4,
+                line: 'りんかい線',
+                note: 'エレベーター付近'
+            },
+            '東京テレポート-rinkai': {
+                car: 5,
+                line: 'りんかい線',
+                note: 'エレベーター付近'
+            },
+            '国際展示場-rinkai': {
+                car: 5,
+                line: 'りんかい線',
+                note: 'エレベーター付近'
+            },
+            '東雲-rinkai': {
+                car: 3,
+                line: 'りんかい線',
+                note: 'エレベーター付近'
+            },
+            '新木場-rinkai': {
+                car: 8,
+                line: 'りんかい線',
+                note: 'エレベーター付近'
+            },
+
+            // 中央線
+            '東京-chuo': {
+                car: 1,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+            '神田-chuo-east': {
+                car: 9,
+                line: 'JR中央線（東口・北口方面）',
+                note: '東口・北口方面'
+            },
+            '神田-chuo-west': {
+                car: 3,
+                line: 'JR中央線（西口・南口方面）',
+                note: '西口・南口方面'
+            },
+            '御茶ノ水-chuo': {
+                car: 10,
+                line: 'JR中央線',
+                note: '改札・出口方面'
+            },
+            '四ツ谷-chuo': {
+                car: 8,
+                line: 'JR中央線',
+                note: '出口改札方面'
+            },
+            '新宿-chuo-tokyo-central': {
+                car: 3,
+                line: 'JR中央線（東京方面）中央東口・中央西口方面',
+                note: '中央東口・中央西口方面'
+            },
+            '新宿-chuo-tokyo-south': {
+                car: 7,
+                line: 'JR中央線（東京方面）東南改札・南改札・小田急のりかえ口方面',
+                note: '東南改札・南改札（東南口・南口）・小田急のりかえ口方面'
+            },
+            '高円寺-chuo': {
+                car: 4,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+            '阿佐ヶ谷-chuo': {
+                car: 3,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+            '荻窪-chuo-west': {
+                car: 9,
+                line: 'JR中央線（西口改札）',
+                note: '西口改札'
+            },
+            '荻窪-chuo-east': {
+                car: 4,
+                line: 'JR中央線（東口改札）',
+                note: '東口改札'
+            },
+            '西荻窪-chuo': {
+                car: 6,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+            '吉祥寺-chuo': {
+                car: 6,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+            '三鷹-chuo': {
+                car: 6,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+            '武蔵境-chuo': {
+                car: 6,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+            '東小金井-chuo': {
+                car: 5,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+            '武蔵小金井-chuo': {
+                car: 7,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+            '国分寺-chuo-takao-10': {
+                car: 6,
+                line: 'JR中央線（高尾方面・10両編成）',
+                note: '10両編成の場合'
+            },
+            '国分寺-chuo-takao-12': {
+                car: 8,
+                line: 'JR中央線（高尾方面・12両編成）',
+                note: '12両編成の場合'
+            },
+            '国分寺-chuo-tokyo': {
+                car: 8,
+                line: 'JR中央線（東京方面）',
+                note: 'エレベーター付近'
+            },
+            '西国分寺-chuo': {
+                car: 6,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+            '国立-chuo': {
+                car: 5,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+            '立川-chuo': {
+                car: 3,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+            '日野-chuo-takao': {
+                car: 4,
+                line: 'JR中央線（高尾方面）',
+                note: '高尾方面'
+            },
+            '日野-chuo-tokyo': {
+                car: 2,
+                line: 'JR中央線（東京方面）',
+                note: '東京方面'
+            },
+            '豊田-chuo': {
+                car: 5,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+            '八王子-chuo-takao': {
+                car: 2,
+                line: 'JR中央線（高尾方面）',
+                note: '高尾方面'
+            },
+            '八王子-chuo-tokyo': {
+                car: 4,
+                line: 'JR中央線（東京方面）',
+                note: '東京方面'
+            },
+            '西八王子-chuo': {
+                car: 6,
+                line: 'JR中央線',
+                note: 'エレベーター付近'
+            },
+
+            // 京葉線
+            '東京-keiyo': {
+                car: 4,
+                line: 'JR京葉線',
+                note: 'エレベーター付近'
+            },
+            '八丁堀-keiyo-10': {
+                car: 6,
+                line: 'JR京葉線（10両編成）',
+                note: 'エレベーター付近'
+            },
+            '八丁堀-keiyo-8': {
+                car: 4,
+                line: 'JR京葉線（8両編成）',
+                note: 'エレベーター付近'
+            },
+            '越中島-keiyo-10': {
+                car: 5,
+                line: 'JR京葉線（10両編成）',
+                note: 'エレベーター付近'
+            },
+            '越中島-keiyo-8': {
+                car: 3,
+                line: 'JR京葉線（8両編成）',
+                note: 'エレベーター付近'
+            },
+            '潮見-keiyo-10': {
+                car: 5,
+                line: 'JR京葉線（10両編成）',
+                note: 'エレベーター付近'
+            },
+            '潮見-keiyo-8': {
+                car: 3,
+                line: 'JR京葉線（8両編成）',
+                note: 'エレベーター付近'
+            },
+            '新木場-keiyo-1': {
+                car: 3,
+                line: 'JR京葉線',
+                note: 'エレベーター付近'
+            },
+            '新木場-keiyo-2': {
+                car: 5,
+                line: 'JR京葉線',
+                note: 'エレベーター付近'
+            },
+            '葛西臨海公園-keiyo-10': {
+                car: 5,
+                line: 'JR京葉線（10両編成）',
+                note: 'エレベーター付近'
+            },
+            '葛西臨海公園-keiyo-8': {
+                car: 4,
+                line: 'JR京葉線（8両編成）',
+                note: 'エレベーター付近'
+            },
+            '舞浜-keiyo-10-1': {
+                car: 5,
+                line: 'JR京葉線（10両編成）',
+                note: 'エレベーター付近'
+            },
+            '舞浜-keiyo-10-2': {
+                car: 6,
+                line: 'JR京葉線（10両編成）',
+                note: 'エレベーター付近'
+            },
+            '舞浜-keiyo-8-1': {
+                car: 4,
+                line: 'JR京葉線（8両編成）',
+                note: 'エレベーター付近'
+            },
+            '舞浜-keiyo-8-2': {
+                car: 5,
+                line: 'JR京葉線（8両編成）',
+                note: 'エレベーター付近'
+            },
+            '新浦安-keiyo-10': {
+                car: 4,
+                line: 'JR京葉線（10両編成）',
+                note: 'エレベーター付近'
+            },
+            '新浦安-keiyo-8': {
+                car: 2,
+                line: 'JR京葉線（8両編成）',
+                note: 'エレベーター付近'
+            },
+            '市川塩浜-keiyo-10': {
+                car: 6,
+                line: 'JR京葉線（10両編成）',
+                note: 'エレベーター付近'
+            },
+            '市川塩浜-keiyo-8': {
+                car: 4,
+                line: 'JR京葉線（8両編成）',
+                note: 'エレベーター付近'
+            },
+            '二俣新町-keiyo': {
+                car: 8,
+                line: 'JR京葉線',
+                note: 'エレベーター付近'
+            },
+            '南船橋-keiyo-10': {
+                car: 3,
+                line: 'JR京葉線（10両編成）',
+                note: 'エレベーター付近'
+            },
+            '南船橋-keiyo-8': {
+                car: 6,
+                line: 'JR京葉線（8両編成）',
+                note: 'エレベーター付近'
+            },
+            '新習志野-keiyo': {
+                car: 5,
+                line: 'JR京葉線',
+                note: 'エレベーター付近'
+            },
+            '海浜幕張-keiyo-10': {
+                car: 4,
+                line: 'JR京葉線（10両編成）',
+                note: 'エレベーター付近'
+            },
+            '海浜幕張-keiyo-8': {
+                car: 7,
+                line: 'JR京葉線（8両編成）',
+                note: 'エレベーター付近'
+            },
+            '検見川浜-keiyo': {
+                car: 7,
+                line: 'JR京葉線',
+                note: 'エレベーター付近'
+            },
+            '稲毛海岸-keiyo': {
+                car: 5,
+                line: 'JR京葉線',
+                note: 'エレベーター付近'
+            },
+            '千葉みなと-keiyo': {
+                car: 4,
+                line: 'JR京葉線',
+                note: 'エレベーター付近'
+            },
+            '蘇我-keiyo': {
+                car: 10,
+                line: 'JR京葉線',
+                note: 'エレベーター付近'
+            }
         };
 
-        const carData = {
-            // 山手線（既存データ）
-            '14-11': { car: 5, line: 'JR山手線' }, '14-18': { car: 7, line: 'JR山手線' },
-            '14-1': { car: 6, line: 'JR山手線' }, '14-6': { car: 5, line: 'JR山手線' },
-            '14-26': { car: 8, line: 'JR山手線' }, '11-14': { car: 3, line: 'JR山手線' },
-            '11-18': { car: 6, line: 'JR山手線' }, '11-1': { car: 7, line: 'JR山手線' },
-            '11-6': { car: 4, line: 'JR山手線' }, '11-26': { car: 8, line: 'JR山手線' },
-            '18-14': { car: 4, line: 'JR山手線' }, '18-11': { car: 5, line: 'JR山手線' },
-            '18-1': { car: 6, line: 'JR山手線' }, '18-6': { car: 5, line: 'JR山手線' },
-            '18-26': { car: 7, line: 'JR山手線' }, '1-14': { car: 5, line: 'JR山手線' },
-            '1-11': { car: 4, line: 'JR山手線' }, '1-18': { car: 6, line: 'JR山手線' },
-            '1-6': { car: 3, line: 'JR山手線' }, '1-26': { car: 7, line: 'JR山手線' },
-            '6-14': { car: 6, line: 'JR山手線' }, '6-11': { car: 5, line: 'JR山手線' },
-            '6-18': { car: 7, line: 'JR山手線' }, '6-1': { car: 4, line: 'JR山手線' },
-            '6-26': { car: 8, line: 'JR山手線' }, '26-14': { car: 3, line: 'JR山手線' },
-            '26-11': { car: 4, line: 'JR山手線' }, '26-18': { car: 4, line: 'JR山手線' },
-            '26-1': { car: 5, line: 'JR山手線' }, '26-6': { car: 6, line: 'JR山手線' },
-            '10-11': { car: 2, line: 'JR山手線' }, '11-10': { car: 9, line: 'JR山手線' },
-            '28-1': { car: 3, line: 'JR山手線' }, '1-28': { car: 8, line: 'JR山手線' },
-            '3-1': { car: 3, line: 'JR山手線' }, '1-3': { car: 8, line: 'JR山手線' },
-            '12-11': { car: 3, line: 'JR山手線' }, '11-12': { car: 8, line: 'JR山手線' },
+        // 駅リストを生成（検索用）
+        const stationList = [];
+        const stationLineMap = {}; // 駅ごとの路線をグループ化
+        
+        Object.keys(stationData).forEach(key => {
+            const data = stationData[key];
+            const stationName = key.split('-')[0];
+            const lineType = key.split('-')[1]; // yamanote, saikyo, etc.
             
-            // 浦和・大宮エリア追加
-            '101-102': { car: 5, line: 'JR京浜東北線' },  // 浦和→大宮
-            '102-101': { car: 5, line: 'JR京浜東北線' },  // 大宮→浦和
-            '103-104': { car: 3, line: 'JR湘南新宿ライン' },  // 浦和→渋谷
-            '104-103': { car: 11, line: 'JR湘南新宿ライン' }  // 渋谷→浦和
-        };
+            // 基本路線名を抽出（改札・方面情報を除去）
+            let baseLine = data.line.split('（')[0]; // 「JR埼京線（新南改札方面）」→「JR埼京線」
+            
+            if (!stationLineMap[stationName]) {
+                stationLineMap[stationName] = {};
+            }
+            
+            if (!stationLineMap[stationName][baseLine]) {
+                stationLineMap[stationName][baseLine] = [];
+            }
+            
+            stationLineMap[stationName][baseLine].push(key);
+        });
+        
+        // 駅と路線の組み合わせリストを作成
+        Object.keys(stationLineMap).forEach(stationName => {
+            Object.keys(stationLineMap[stationName]).forEach(lineName => {
+                stationList.push({
+                    station: stationName,
+                    line: lineName,
+                    keys: stationLineMap[stationName][lineName]
+                });
+            });
+        });
 
-        let selectedFrom = null;
-        let selectedTo = null;
+        // DOM要素
+        const destinationInput = document.getElementById('destination-input');
+        const destinationDropdown = document.getElementById('destination-dropdown');
+        const clearButton = document.getElementById('clear-button');
+        const searchButton = document.getElementById('search-button');
+        const errorMessage = document.getElementById('error-message');
+        const result = document.getElementById('result');
+        const resultCar = document.getElementById('result-car');
+        const resultNote = document.getElementById('result-note');
 
-        const fromInput = document.getElementById('fromInput');
-        const toInput = document.getElementById('toInput');
-        const fromResults = document.getElementById('fromResults');
-        const toResults = document.getElementById('toResults');
-        const fromSelected = document.getElementById('fromSelected');
-        const toSelected = document.getElementById('toSelected');
-        const submitBtn = document.getElementById('submitBtn');
-        const searchScreen = document.getElementById('searchScreen');
-        const resultScreen = document.getElementById('resultScreen');
-        const backBtn = document.getElementById('backBtn');
-        const swapBtn = document.getElementById('swapBtn');
+        let selectedStation = null;
 
-        function searchStations(query, isFrom) {
-            if (!query) {
-                if (isFrom) {
-                    fromResults.innerHTML = '';
-                    fromResults.classList.remove('show');
-                } else {
-                    toResults.innerHTML = '';
-                    toResults.classList.remove('show');
-                }
+        // クリアボタンの表示/非表示
+        function updateClearButton() {
+            if (destinationInput.value.trim().length > 0) {
+                clearButton.classList.add('show');
+            } else {
+                clearButton.classList.remove('show');
+            }
+        }
+
+        // クリアボタンのクリックイベント
+        clearButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            destinationInput.value = '';
+            selectedStation = null;
+            destinationDropdown.classList.remove('show');
+            errorMessage.classList.remove('show');
+            result.classList.remove('show');
+            clearButton.classList.remove('show');
+            destinationInput.focus();
+        });
+
+        // 検索フィルタリング（駅名完全一致のみ）
+        function filterStations(query) {
+            if (!query) return [];
+            
+            return stationList.filter(item => 
+                item.station === query || item.station.includes(query)
+            );
+        }
+
+        // ドロップダウン表示
+        function showDropdown(stations) {
+            if (stations.length === 0) {
+                destinationDropdown.classList.remove('show');
                 return;
             }
 
-            let results = Object.keys(stationsData)
-                .filter(station => station.includes(query))
-                .flatMap(station => stationsData[station]);
+            destinationDropdown.innerHTML = stations.map((item, index) => `
+                <div class="dropdown-item" data-index="${index}">
+                    <div class="station-name">${item.station}</div>
+                    <div class="line-name">${item.line}</div>
+                </div>
+            `).join('');
 
-            // 降りる駅の場合、乗る駅と同じ路線を優先
-            if (!isFrom && selectedFrom) {
-                const sameLineResults = results.filter(s => s.line === selectedFrom.line);
-                if (sameLineResults.length > 0) {
-                    results = sameLineResults;
-                }
+            destinationDropdown.classList.add('show');
+
+            // クリックイベント
+            document.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    const station = stations[index];
+                    selectStation(station);
+                });
+            });
+        }
+
+        // 駅選択
+        function selectStation(station) {
+            selectedStation = station;
+            destinationInput.value = `${station.station}（${station.line}）`;
+            destinationDropdown.classList.remove('show');
+            errorMessage.classList.remove('show');
+        }
+
+        // 入力イベント
+        destinationInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            selectedStation = null;
+            updateClearButton();
+            
+            if (query.length === 0) {
+                destinationDropdown.classList.remove('show');
+                return;
             }
 
-            const resultsContainer = isFrom ? fromResults : toResults;
-            
-            // Yahoo!スタイル：候補がない時は何も表示しない
-            if (results.length === 0) {
-                resultsContainer.innerHTML = '';
-                resultsContainer.classList.remove('show');
-            } else {
-                resultsContainer.innerHTML = results.map(station => `
-                    <div class="result-item" data-id="${station.id}" data-name="${station.name}" data-line="${station.line}">
-                        <div class="result-station">📍 ${station.name}</div>
-                        <div class="result-line">${station.line}</div>
-                    </div>
-                `).join('');
+            const filtered = filterStations(query);
+            showDropdown(filtered);
+        });
 
-                resultsContainer.querySelectorAll('.result-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        const id = item.dataset.id;
-                        const name = item.dataset.name;
-                        const line = item.dataset.line;
-                        
-                        if (isFrom) {
-                            selectedFrom = { id, name, line };
-                            fromInput.value = name;
-                            fromSelected.textContent = `選択中: ${name} (${line})`;
-                            fromSelected.style.display = 'block';
-                            fromResults.classList.remove('show');
-                        } else {
-                            selectedTo = { id, name, line };
-                            toInput.value = name;
-                            toSelected.textContent = `選択中: ${name} (${line})`;
-                            toSelected.style.display = 'block';
-                            toResults.classList.remove('show');
+        // フォーカスアウト時にドロップダウンを閉じる
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.input-wrapper')) {
+                destinationDropdown.classList.remove('show');
+            }
+        });
+
+        // 検索ボタン
+        searchButton.addEventListener('click', function() {
+            if (!selectedStation) {
+                errorMessage.textContent = '降りる駅を選択してください';
+                errorMessage.classList.add('show');
+                result.classList.remove('show');
+                return;
+            }
+
+            // 複数の号車データを取得
+            const carOptions = selectedStation.keys.map(key => {
+                const data = stationData[key];
+                const fullLine = data.line; // line全体を取得
+                
+                // labelを正しく抽出
+                let label = '';
+                
+                // JR埼京線（新木場・海老名・大崎方面）東南改札・南改札方面
+                // から（）を除いた部分を取得
+                if (fullLine.includes('（')) {
+                    // 最初の（以降の部分
+                    const afterParen = fullLine.substring(fullLine.indexOf('（') + 1);
+                    // 路線名部分を除去
+                    label = afterParen;
+                } else {
+                    label = '';
+                }
+                
+                // 方面グループを判定（fullLineから判定）
+                let directionGroup = '';
+                
+                // 山手線：内回り・外回り
+                if (fullLine.includes('内回り')) {
+                    directionGroup = '内回り';
+                } else if (fullLine.includes('外回り')) {
+                    directionGroup = '外回り';
+                }
+                // 中央線：東京方面・高尾方面
+                else if (fullLine.includes('東京方面')) {
+                    directionGroup = '東京方面';
+                } else if (fullLine.includes('高尾方面')) {
+                    directionGroup = '高尾方面';
+                }
+                // 京浜東北線：大船方面・大宮方面
+                else if (fullLine.includes('大船方面')) {
+                    directionGroup = '大船方面';
+                } else if (fullLine.includes('大宮方面') && !fullLine.includes('から')) {
+                    directionGroup = '大宮方面';
+                }
+                // 埼京線：武蔵浦和・大宮方面 vs 新木場・海老名・大崎方面
+                else if (fullLine.includes('新木場・海老名・大崎方面') || fullLine.includes('新木場方面')) {
+                    directionGroup = '新木場・海老名・大崎方面';
+                } else if (fullLine.includes('武蔵浦和・大宮方面')) {
+                    directionGroup = '武蔵浦和・大宮方面';
+                }
+                // 湘南新宿ライン
+                else if (fullLine.includes('大宮方面から')) {
+                    directionGroup = '大宮方面から';
+                } else if (fullLine.includes('横浜方面から')) {
+                    directionGroup = '横浜方面から';
+                }
+                // 編成別
+                else if (fullLine.includes('10両編成')) {
+                    directionGroup = '10両編成';
+                } else if (fullLine.includes('12両編成')) {
+                    directionGroup = '12両編成';
+                } else if (fullLine.includes('8両編成')) {
+                    directionGroup = '8両編成';
+                }
+                // その他
+                else {
+                    directionGroup = 'その他';
+                }
+                
+                return {
+                    car: data.car,
+                    label: label,
+                    note: data.note,
+                    directionGroup: directionGroup,
+                    rawKey: key
+                };
+            });
+            
+            // 結果表示
+            if (carOptions.length === 1) {
+                // 1つの場合はシンプル表示
+                resultCar.innerHTML = `<div class="car-number">${carOptions[0].car}号車</div>`;
+                resultNote.textContent = carOptions[0].note;
+            } else {
+                // グループごとに分類
+                const groups = {};
+                carOptions.forEach(opt => {
+                    const group = opt.directionGroup;
+                    if (!groups[group]) {
+                        groups[group] = [];
+                    }
+                    groups[group].push(opt);
+                });
+
+                // グループ表示の順序を決定
+                const groupOrder = [
+                    '新木場・海老名・大崎方面',
+                    '武蔵浦和・大宮方面',
+                    '内回り',
+                    '外回り',
+                    '東京方面',
+                    '高尾方面',
+                    '大船方面',
+                    '大宮方面',
+                    '大宮方面から',
+                    '横浜方面から',
+                    '8両編成',
+                    '10両編成',
+                    '12両編成'
+                ];
+
+                // グループごとに表示
+                let html = '';
+                let groupCount = 0;
+                
+                // 最初に総グループ数を記録（deleteの影響を受けないように）
+                const totalGroups = Object.keys(groups).length;
+                
+                // 定義された順序でグループを表示
+                groupOrder.forEach(groupKey => {
+                    if (groups[groupKey]) {
+                        if (groupCount > 0) {
+                            html += '<div class="group-divider"></div>';
                         }
                         
-                        checkSubmitButton();
-                    });
+                        // グループヘッダーを表示（グループが2つ以上ある場合のみ）
+                        if (totalGroups > 1 && groupKey !== 'その他') {
+                            // 最初のカードのlabelから「〜方面」部分を抽出
+                            const firstLabel = groups[groupKey][0].label;
+                            let headerText = '';
+                            
+                            // 「方面」の位置を見つける
+                            const houmenIdx = firstLabel.indexOf('方面');
+                            if (houmenIdx !== -1) {
+                                // 「方面」を含む部分まで抽出（括弧は既に除去済み）
+                                headerText = firstLabel.substring(0, houmenIdx + 2);
+                            } else {
+                                headerText = groupKey;
+                            }
+                            
+                            html += `<div class="direction-header">${headerText}</div>`;
+                        }
+                        
+                        groups[groupKey].forEach(opt => {
+                            // labelから括弧を除去して、方面と改札を分割
+                            let parts = opt.label.replace(/[（）]/g, '').split(/(?<=方面)/);
+                            // let line1 = parts[0] || opt.label; // 方面部分（削除）
+                            let line2 = parts[1] ? parts[1].trim() : ''; // 改札部分のみ表示
+                            
+                            html += `
+                                <div class="car-option">
+                                    <div class="car-number">${opt.car}号車</div>
+                                    ${line2 ? `<div class="car-label">${line2}</div>` : ''}
+                                </div>
+                            `;
+                        });
+                        
+                        groupCount++;
+                        delete groups[groupKey]; // 処理済みを削除
+                    }
                 });
                 
-                resultsContainer.classList.add('show');
-            }
-        }
-
-        fromInput.addEventListener('input', (e) => {
-            searchStations(e.target.value, true);
-        });
-
-        toInput.addEventListener('input', (e) => {
-            searchStations(e.target.value, false);
-        });
-
-        swapBtn.addEventListener('click', () => {
-            [selectedFrom, selectedTo] = [selectedTo, selectedFrom];
-            [fromInput.value, toInput.value] = [toInput.value, fromInput.value];
-            
-            if (selectedFrom) {
-                fromSelected.textContent = `選択中: ${selectedFrom.name} (${selectedFrom.line})`;
-                fromSelected.style.display = 'block';
-            } else {
-                fromSelected.style.display = 'none';
-            }
-            
-            if (selectedTo) {
-                toSelected.textContent = `選択中: ${selectedTo.name} (${selectedTo.line})`;
-                toSelected.style.display = 'block';
-            } else {
-                toSelected.style.display = 'none';
-            }
-            
-            checkSubmitButton();
-        });
-
-        function checkSubmitButton() {
-            submitBtn.disabled = !(selectedFrom && selectedTo);
-        }
-
-        submitBtn.addEventListener('click', () => {
-            const key = `${selectedFrom.id}-${selectedTo.id}`;
-            const result = carData[key];
-            
-            if (result) {
-                document.getElementById('carNumber').textContent = result.car;
-                document.getElementById('routeText').textContent = `${selectedFrom.name} → ${selectedTo.name}`;
-                document.getElementById('lineText').textContent = `(${result.line})`;
+                // 残りのグループ（その他）を表示
+                if (groups['その他']) {
+                    // その他が1つだけの場合は区切り線なし
+                    if (groupCount > 0 && groups['その他'].length > 1) {
+                        html += '<div class="group-divider"></div>';
+                    }
+                    
+                    groups['その他'].forEach(opt => {
+                        // labelから括弧を除去して、方面と改札を分割
+                        let parts = opt.label.replace(/[（）]/g, '').split(/(?<=方面)/);
+                        let line2 = parts[1] ? parts[1].trim() : ''; // 改札部分のみ表示
+                        
+                        html += `
+                            <div class="car-option">
+                                <div class="car-number">${opt.car}号車</div>
+                                ${line2 ? `<div class="car-label">${line2}</div>` : ''}
+                            </div>
+                        `;
+                    });
+                }
                 
-                searchScreen.style.display = 'none';
-                resultScreen.classList.add('show');
-            } else {
-                alert('申し訳ありません。この区間のデータがまだ登録されていません。');
+                resultCar.innerHTML = html;
+                resultNote.textContent = '目的の改札・方面に応じて選んでください';
             }
+            
+            result.classList.add('show');
+            errorMessage.classList.remove('show');
         });
 
-        backBtn.addEventListener('click', () => {
-            resultScreen.classList.remove('show');
-            searchScreen.style.display = 'block';
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.search-input-wrapper')) {
-                fromResults.classList.remove('show');
-                toResults.classList.remove('show');
+        // Enterキーで検索
+        destinationInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchButton.click();
             }
         });
     </script>
