@@ -2888,7 +2888,9 @@
                             exitInfo = opt.note;
                         }
                     } else {
-                        exitInfo = (opt.label.replace(/[（）]/g, '').split(/(?<=方面)/)[1] || '').trim();
+                        const candidate = (opt.label.replace(/[（）]/g, '').split(/(?<=方面)/)[1] || '').trim();
+                        // directionsリストに含まれる方面はexitInfoにしない
+                        exitInfo = directions.some(d => candidate.includes(d)) ? '' : candidate;
                     }
                     
                     // 「から当駅止まり」をexitInfoから除外
