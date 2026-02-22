@@ -2316,6 +2316,8 @@
             // 青梅（JC62）立川方面からの列車
             '青梅-ome-10': { car: 4, line: 'JR青梅線（10両編成） 立川方面からの列車', note: '' },
             '青梅-ome-6': { car: 1, line: 'JR青梅線（6両編成） 立川方面からの列車', note: '' },
+            // 青梅（JC62）奥多摩方面からの列車（4両編成）
+            '青梅-ome-4': { car: 1, line: 'JR青梅線（4両編成） 奥多摩方面からの列車', note: '' },
 
 
             // 南武線（JN）
@@ -2533,7 +2535,7 @@
                           '宇都宮方面', '東神奈川方面', '八王子方面', '熱海方面',
                           '東京方面・千葉方面', '逗子・久里浜方面', '東京・千葉方面', '当駅止まり',
                           '東京方面・逗子方面', '東京・千葉方面始発',
-                          '東京方面・青梅方面', '青梅方面', '立川方面からの列車'];
+                          '東京方面・青梅方面', '青梅方面', '立川方面からの列車', '奥多摩方面からの列車'];
         // 路線の補足説明マップ
         const lineDescriptions = {
             'JR高崎線': { 
@@ -2990,6 +2992,8 @@
                         directionInfo = '東京方面・青梅方面';
                     } else if (fullLine.includes('立川方面からの列車')) {
                         directionInfo = '立川方面からの列車';
+                    } else if (fullLine.includes('奥多摩方面からの列車')) {
+                        directionInfo = '奥多摩方面からの列車';
                     } else if (fullLine.includes('青梅方面')) {
                         directionInfo = '青梅方面';
                     } else if (fullLine.includes('当駅止まり')) {
@@ -3101,9 +3105,13 @@
                 const allFormationsSet = [...new Set(carOptions.map(opt => opt.formationInfo).filter(f => f))];
                 const hasMultipleFormations = allFormationsSet.length > 1;
                 
-                // 注釈文を生成
+                // 注釈文を生成（グループをまたぐ場合は各グループで個別生成）
+                const hasGroupedDirections = carOptions.some(opt => 
+                    opt.rawKey && (stationData[opt.rawKey].line.includes('立川方面からの列車') || 
+                                   stationData[opt.rawKey].line.includes('奥多摩方面からの列車')));
+                
                 let noteText = '';
-                if (hasMultipleFormations && allFormationsSet.length === 2) {
+                if (!hasGroupedDirections && hasMultipleFormations && allFormationsSet.length === 2) {
                     allFormationsSet.sort((a, b) => {
                         const numA = parseInt(a.match(/\d+/)[0]);
                         const numB = parseInt(b.match(/\d+/)[0]);
@@ -3116,7 +3124,7 @@
                 // HTML生成
                 let html = '';
                 
-                // 注釈を最初に表示
+                // 注釈を最初に表示（グループ別でない場合のみ）
                 if (noteText) {
                     html += `<div class="formation-note" style="font-size: 14px; color: #666; margin-bottom: 20px; padding: 12px; background: #f8f9ff; border-radius: 8px;">${noteText}</div>`;
                 }
@@ -3171,7 +3179,28 @@
                             displayDirection = `${platformDirectionMatch[1]}<br><span style="font-size: 16px;">(${platformDirectionMatch[2]})</span>`;
                         }
                         
+                        // 「立川方面からの列車」「奥多摩方面からの列車」は編成情報付きヘッダー
+                        if (directionInfo === '立川方面からの列車') {
+                            const formations = group.entries.map(e => e.formationInfo).filter(f => f);
+                            const formationText = formations.length > 0 ? `（${formations.join('・')}）` : '';
+                            displayDirection = `立川方面からの列車${formationText}`;
+                        } else if (directionInfo === '奥多摩方面からの列車') {
+                            const formations = group.entries.map(e => e.formationInfo).filter(f => f);
+                            const formationText = formations.length > 0 ? `（${formations.join('・')}）` : '';
+                            displayDirection = `奥多摩方面からの列車${formationText}`;
+                        }
+                        
                         html += `<div class="direction-header" style="font-size: 18px; font-weight: 600; color: #667eea; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #667eea; text-align: center;">${displayDirection}</div>`;
+                        
+                        // 立川方面グループの場合、複数編成があれば注釈を表示
+                        if (directionInfo === '立川方面からの列車') {
+                            const groupFormations = [...new Set(group.entries.map(e => e.formationInfo).filter(f => f))];
+                            if (groupFormations.length >= 2) {
+                                groupFormations.sort((a, b) => parseInt(b.match(/\d+/)[0]) - parseInt(a.match(/\d+/)[0]));
+                                const smallerF = groupFormations[groupFormations.length - 1];
+                                html += `<div class="formation-note" style="font-size: 14px; color: #666; margin-bottom: 15px; padding: 10px; background: #f8f9ff; border-radius: 8px;">※（ ）内は、${smallerF}時の号車です。</div>`;
+                            }
+                        }
                         currentDirection = directionInfo;
                     }
                     
