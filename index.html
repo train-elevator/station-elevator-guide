@@ -2753,12 +2753,18 @@
                 let formationInfo = '';
                 if (fullLine.includes('15両編成')) {
                     formationInfo = '15両編成';
-                } else if (fullLine.includes('10両編成')) {
-                    formationInfo = '10両編成';
                 } else if (fullLine.includes('12両編成')) {
                     formationInfo = '12両編成';
+                } else if (fullLine.includes('11両編成')) {
+                    formationInfo = '11両編成';
+                } else if (fullLine.includes('10両編成')) {
+                    formationInfo = '10両編成';
                 } else if (fullLine.includes('8両編成')) {
                     formationInfo = '8両編成';
+                } else if (fullLine.includes('6両編成')) {
+                    formationInfo = '6両編成';
+                } else if (fullLine.includes('4両編成')) {
+                    formationInfo = '4両編成';
                 }
                 
                 // 番線情報を抽出（大宮駅などの複雑なケース用）
@@ -3071,10 +3077,14 @@
                     const carNumbers = entries.map(e => e.car).sort().join('-');
                     
                     // 同じ改札情報を持つ他のグループをチェック
+                    // ただし「立川方面からの列車」「奥多摩方面からの列車」はマージしない
+                    const isTrainGroup = directionInfo === '立川方面からの列車' || directionInfo === '奥多摩方面からの列車';
                     for (const [otherKey, otherGroup] of displayGroups.entries()) {
+                        const isOtherTrainGroup = otherGroup.directionInfo === '立川方面からの列車' || otherGroup.directionInfo === '奥多摩方面からの列車';
                         if (otherKey !== key && 
                             otherGroup.exitInfo === exitInfo && 
-                            otherGroup.directionInfo !== directionInfo) {
+                            otherGroup.directionInfo !== directionInfo &&
+                            !isTrainGroup && !isOtherTrainGroup) {
                             const otherCarNumbers = otherGroup.entries.map(e => e.car).sort().join('-');
                             if (carNumbers === otherCarNumbers) {
                                 shouldMerge = true;
