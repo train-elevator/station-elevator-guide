@@ -1,0 +1,2960 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>乗車位置案内 - どの号車に乗ればいい？</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .clear-button {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #e0e0e0;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .clear-button:hover {
+            background: #d0d0d0;
+            color: #333;
+        }
+
+        .clear-button.show {
+            display: flex;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            margin-top: -10px;
+        }
+
+        .dropdown.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: #f8f9ff;
+        }
+
+        .dropdown-item .station-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .dropdown-item .line-name {
+            font-size: 13px;
+            color: #667eea;
+        }
+
+        .search-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .search-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-button:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            display: none;
+            text-align: center;
+            padding-top: 20px;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result-car {
+            font-size: 48px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 20px 0;
+            line-height: 1.2;
+        }
+
+        .direction-group {
+            margin: 25px 0;
+        }
+
+        .direction-header {
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .group-divider {
+            height: 3px;
+            background: #667eea;
+            margin: 25px 0;
+            border-radius: 2px;
+        }
+
+        .car-option {
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+            border: 2px solid #667eea;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            transition: all 0.3s;
+        }
+
+        .car-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+            border-color: #764ba2;
+        }
+
+        .car-number {
+            font-size: 48px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .car-label {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .result-text {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .result-note {
+            font-size: 14px;
+            color: #999;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9ff;
+            border-radius: 12px;
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚃 乗車位置案内</h1>
+            <p>どの号車に乗ればいい？</p>
+        </div>
+
+        <div class="card">
+            <div class="input-group">
+                <label>🎯 降りる駅</label>
+                <div class="input-wrapper">
+                    <input type="text" id="destination-input" placeholder="駅名を入力（例：渋谷）" autocomplete="off">
+                    <button class="clear-button" id="clear-button">✕</button>
+                    <div class="dropdown" id="destination-dropdown"></div>
+                </div>
+            </div>
+
+            <button class="search-button" id="search-button">号車を検索</button>
+            
+            <div class="error" id="error-message"></div>
+
+            <div class="result" id="result">
+                <div class="result-car" id="result-car"></div>
+                <div class="result-text">に乗ろう！</div>
+                <div class="result-note" id="result-note"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // データベース（降りる駅ごとのエレベーター位置）
+        const stationData = {
+            // 山手線
+            '東京-yamanote-outer-south': {
+                car: 1,
+                line: 'JR山手線（外回り）八重洲南口・丸の内南口方面',
+                note: '八重洲南口・丸の内南口方面'
+            },
+            '東京-yamanote-outer-north': {
+                car: 9,
+                line: 'JR山手線（外回り）八重洲北口・丸の内北口方面',
+                note: '八重洲北口・丸の内北口方面'
+            },
+            '東京-yamanote-inner-north': {
+                car: 9,
+                line: 'JR山手線（内回り）八重洲北口・丸の内北口方面',
+                note: '八重洲北口・丸の内北口方面'
+            },
+            '東京-yamanote-inner-south': {
+                car: 2,
+                line: 'JR山手線（内回り）八重洲南口・丸の内南口方面',
+                note: '八重洲南口・丸の内南口方面'
+            },
+            '神田-yamanote-outer-west': {
+                car: 1,
+                line: 'JR山手線（外回り）西口・南口方面',
+                note: '西口・南口方面'
+            },
+            '神田-yamanote-outer-east': {
+                car: 5,
+                line: 'JR山手線（外回り）東口・北口方面',
+                note: '東口・北口方面'
+            },
+            '神田-yamanote-inner-east': {
+                car: 10,
+                line: 'JR山手線（内回り）東口・北口方面',
+                note: '東口・北口方面'
+            },
+            '神田-yamanote-inner-west': {
+                car: 3,
+                line: 'JR山手線（内回り）西口・南口方面',
+                note: '西口・南口方面'
+            },
+            '秋葉原-yamanote-outer': {
+                car: 6,
+                line: 'JR山手線（外回り）',
+                note: ''
+            },
+            '秋葉原-yamanote-inner': {
+                car: 4,
+                line: 'JR山手線（内回り）',
+                note: ''
+            },
+            '御徒町-yamanote-outer-south': {
+                car: 3,
+                line: 'JR山手線（外回り）南口改札方面',
+                note: '南口改札方面'
+            },
+            '御徒町-yamanote-outer-north': {
+                car: 6,
+                line: 'JR山手線（外回り）北口改札方面',
+                note: '北口改札方面'
+            },
+            '御徒町-yamanote-inner-north': {
+                car: 7,
+                line: 'JR山手線（内回り）北口改札方面',
+                note: '北口改札方面'
+            },
+            '御徒町-yamanote-inner-south': {
+                car: 4,
+                line: 'JR山手線（内回り）南口改札方面',
+                note: '南口改札方面'
+            },
+            '上野-yamanote-outer': {
+                car: 8,
+                line: 'JR山手線（外回り）',
+                note: ''
+            },
+            '上野-yamanote-inner': {
+                car: 9,
+                line: 'JR山手線（内回り）',
+                note: ''
+            },
+            '鶯谷-yamanote-outer': {
+                car: 1,
+                line: 'JR山手線（外回り）',
+                note: ''
+            },
+            '鶯谷-yamanote-inner': {
+                car: 2,
+                line: 'JR山手線（内回り）',
+                note: ''
+            },
+            '日暮里-yamanote-outer-1': {
+                car: 6,
+                line: 'JR山手線（外回り）',
+                note: ''
+            },
+            '日暮里-yamanote-outer-2': {
+                car: 9,
+                line: 'JR山手線（外回り）',
+                note: ''
+            },
+            '日暮里-yamanote-inner-1': {
+                car: 9,
+                line: 'JR山手線（内回り）',
+                note: ''
+            },
+            '日暮里-yamanote-inner-2': {
+                car: 11,
+                line: 'JR山手線（内回り）',
+                note: ''
+            },
+            '西日暮里-yamanote': {
+                car: 4,
+                line: 'JR山手線',
+                note: ''
+            },
+            '田端-yamanote': {
+                car: 11,
+                line: 'JR山手線',
+                note: ''
+            },
+            '駒込-yamanote': {
+                car: 11,
+                line: 'JR山手線',
+                note: ''
+            },
+            '巣鴨-yamanote': {
+                car: 8,
+                line: 'JR山手線',
+                note: ''
+            },
+            '大塚-yamanote': {
+                car: 5,
+                line: 'JR山手線',
+                note: ''
+            },
+            '池袋-yamanote-outer': {
+                car: 7,
+                line: 'JR山手線（外回り）',
+                note: ''
+            },
+            '池袋-yamanote-inner': {
+                car: 9,
+                line: 'JR山手線（内回り）',
+                note: ''
+            },
+            '目白-yamanote': {
+                car: 1,
+                line: 'JR山手線',
+                note: ''
+            },
+            '高田馬場-yamanote': {
+                car: 5,
+                line: 'JR山手線',
+                note: ''
+            },
+            '新大久保-yamanote': {
+                car: 5,
+                line: 'JR山手線',
+                note: ''
+            },
+            '新宿-yamanote-east': {
+                car: 4,
+                line: 'JR山手線（東口改札・西口改札方面）',
+                note: '東口改札・西口改札方面'
+            },
+            '新宿-yamanote-south': {
+                car: 11,
+                line: 'JR山手線（東南口改札・南口改札・小田急線のりかえ専用口方面）',
+                note: '東南口改札・南口改札・小田急線のりかえ専用口方面'
+            },
+            '代々木-yamanote': {
+                car: 9,
+                line: 'JR山手線',
+                note: ''
+            },
+            '原宿-yamanote-outer': {
+                car: 10,
+                line: 'JR山手線（外回り）',
+                note: ''
+            },
+            '原宿-yamanote-inner': {
+                car: 6,
+                line: 'JR山手線（内回り）',
+                note: ''
+            },
+            '渋谷-yamanote': {
+                car: 8,
+                line: 'JR山手線',
+                note: ''
+            },
+            '恵比寿-yamanote': {
+                car: 4,
+                line: 'JR山手線',
+                note: ''
+            },
+            '目黒-yamanote-outer': {
+                car: 6,
+                line: 'JR山手線（外回り）',
+                note: ''
+            },
+            '目黒-yamanote-inner': {
+                car: 5,
+                line: 'JR山手線（内回り）',
+                note: ''
+            },
+            '五反田-yamanote': {
+                car: 8,
+                line: 'JR山手線',
+                note: ''
+            },
+            '大崎-yamanote-outer': {
+                car: 9,
+                line: 'JR山手線（外回り）',
+                note: ''
+            },
+            '大崎-yamanote-inner': {
+                car: 7,
+                line: 'JR山手線（内回り）',
+                note: ''
+            },
+            '品川-yamanote-outer': {
+                car: 4,
+                line: 'JR山手線（外回り）',
+                note: ''
+            },
+            '品川-yamanote-inner': {
+                car: 5,
+                line: 'JR山手線（内回り）',
+                note: ''
+            },
+            '高輪ゲートウェイ-yamanote-1': {
+                car: 4,
+                line: 'JR山手線',
+                note: ''
+            },
+            '高輪ゲートウェイ-yamanote-2': {
+                car: 8,
+                line: 'JR山手線',
+                note: ''
+            },
+            '田町-yamanote-outer': {
+                car: 3,
+                line: 'JR山手線（外回り）',
+                note: ''
+            },
+            '田町-yamanote-inner': {
+                car: 5,
+                line: 'JR山手線（内回り）',
+                note: ''
+            },
+            '浜松町-yamanote': {
+                car: 9,
+                line: 'JR山手線',
+                note: ''
+            },
+            '新橋-yamanote': {
+                car: 5,
+                line: 'JR山手線',
+                note: ''
+            },
+            '有楽町-yamanote-outer': {
+                car: 6,
+                line: 'JR山手線（外回り）',
+                note: ''
+            },
+            '有楽町-yamanote-inner': {
+                car: 7,
+                line: 'JR山手線（内回り）',
+                note: ''
+            },
+
+            // 京浜東北線
+            'さいたま新都心-keihin': {
+                car: 6,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '与野-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '北浦和-keihin': {
+                car: 4,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '浦和-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '南浦和-keihin-ofuna': {
+                car: 2,
+                line: 'JR京浜東北線 大船方面',
+                note: '大船方面'
+            },
+            '南浦和-keihin-omiya': {
+                car: 3,
+                line: 'JR京浜東北線 大宮方面',
+                note: '大宮方面'
+            },
+            '蕨-keihin': {
+                car: 4,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '西川口-keihin': {
+                car: 7,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '川口-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '赤羽-keihin': {
+                car: 1,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '東十条-keihin': {
+                car: 10,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '王子-keihin': {
+                car: 10,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '上中里-keihin': {
+                car: 1,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '田端-keihin': {
+                car: 10,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '西日暮里-keihin': {
+                car: 4,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '日暮里-keihin-ofuna-1': {
+                car: 6,
+                line: 'JR京浜東北線 大船方面',
+                note: ''
+            },
+            '日暮里-keihin-ofuna-2': {
+                car: 9,
+                line: 'JR京浜東北線 大船方面',
+                note: ''
+            },
+            '日暮里-keihin-omiya-1': {
+                car: 8,
+                line: 'JR京浜東北線 大宮方面',
+                note: ''
+            },
+            '日暮里-keihin-omiya-2': {
+                car: 10,
+                line: 'JR京浜東北線 大宮方面',
+                note: ''
+            },
+            '鶯谷-keihin': {
+                car: 1,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '上野-keihin-ofuna': {
+                car: 8,
+                line: 'JR京浜東北線 大船方面',
+                note: ''
+            },
+            '上野-keihin-omiya': {
+                car: 9,
+                line: 'JR京浜東北線 大宮方面',
+                note: ''
+            },
+            '御徒町-keihin-iriya': {
+                car: 3,
+                line: 'JR京浜東北線',
+                note: '入谷改札・公園改札方面'
+            },
+            '御徒町-keihin-kita': {
+                car: 7,
+                line: 'JR京浜東北線',
+                note: '北口改札方面'
+            },
+            '秋葉原-keihin-ofuna': {
+                car: 6,
+                line: 'JR京浜東北線 大船方面',
+                note: ''
+            },
+            '秋葉原-keihin-omiya': {
+                car: 4,
+                line: 'JR京浜東北線 大宮方面',
+                note: ''
+            },
+            '神田-keihin-ofuna-south': {
+                car: 1,
+                line: 'JR京浜東北線（大船方面）南改札方面',
+                note: '南改札方面'
+            },
+            '神田-keihin-ofuna-north': {
+                car: 5,
+                line: 'JR京浜東北線（大船方面）北改札方面',
+                note: '北改札方面'
+            },
+            '神田-keihin-omiya-south': {
+                car: 5,
+                line: 'JR京浜東北線（大宮方面）南改札方面',
+                note: '南改札方面'
+            },
+            '神田-keihin-omiya-north': {
+                car: 10,
+                line: 'JR京浜東北線（大宮方面）北改札方面',
+                note: '北改札方面'
+            },
+            '東京-keihin-ofuna-south': {
+                car: 1,
+                line: 'JR京浜東北線',
+                note: '八重洲南口・丸の内南口方面'
+            },
+            '東京-keihin-ofuna-north': {
+                car: 9,
+                line: 'JR京浜東北線',
+                note: '八重洲北口・丸の内北口方面'
+            },
+            '有楽町-keihin-ofuna-ginza': {
+                car: 4,
+                line: 'JR京浜東北線（大船方面）銀座口・日比谷口方面',
+                note: '銀座口・日比谷口方面'
+            },
+            '有楽町-keihin-ofuna-forum': {
+                car: 6,
+                line: 'JR京浜東北線（大船方面）国際フォーラム口・京橋口方面',
+                note: '国際フォーラム口・京橋口方面'
+            },
+            '有楽町-keihin-omiya': {
+                car: 7,
+                line: 'JR京浜東北線（大宮方面）銀座口・日比谷口方面',
+                note: '銀座口・日比谷口方面'
+            },
+            '新橋-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '浜松町-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '田町-keihin-ofuna': {
+                car: 2,
+                line: 'JR京浜東北線 大船方面',
+                note: ''
+            },
+            '田町-keihin-omiya': {
+                car: 4,
+                line: 'JR京浜東北線 大宮方面',
+                note: ''
+            },
+            '高輪ゲートウェイ-keihin-1': {
+                car: 4,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '高輪ゲートウェイ-keihin-2': {
+                car: 8,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '品川-keihin': {
+                car: 3,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '大井町-keihin': {
+                car: 7,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '大森-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '蒲田-keihin': {
+                car: 7,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '川崎-keihin-1': {
+                car: 3,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '川崎-keihin-2': {
+                car: 8,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '鶴見-keihin': {
+                car: 4,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '新子安-keihin': {
+                car: 9,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '東神奈川-keihin': {
+                car: 7,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '横浜-keihin-south': {
+                car: 2,
+                line: 'JR京浜東北線',
+                note: '南改札方面'
+            },
+            '横浜-keihin-center': {
+                car: 6,
+                line: 'JR京浜東北線',
+                note: '中央北改札方面'
+            },
+            '桜木町-keihin': {
+                car: 6,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '関内-keihin': {
+                car: 9,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '石川町-keihin-motomachi': {
+                car: 2,
+                line: 'JR京浜東北線',
+                note: '元町口方面'
+            },
+            '石川町-keihin-chukagai': {
+                car: 9,
+                line: 'JR京浜東北線',
+                note: '中華街口方面'
+            },
+            '山手-keihin': {
+                car: 8,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '根岸-keihin': {
+                car: 2,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '磯子-keihin': {
+                car: 2,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '新杉田-keihin-ofuna': {
+                car: 5,
+                line: 'JR京浜東北線 大船方面',
+                note: ''
+            },
+            '新杉田-keihin-omiya': {
+                car: 6,
+                line: 'JR京浜東北線 大宮方面',
+                note: ''
+            },
+            '洋光台-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '港南台-keihin': {
+                car: 7,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '本郷台-keihin-ofuna': {
+                car: 5,
+                line: 'JR京浜東北線 大船方面',
+                note: ''
+            },
+            '本郷台-keihin-omiya': {
+                car: 6,
+                line: 'JR京浜東北線 大宮方面',
+                note: ''
+            },
+            '大船-keihin': {
+                car: 8,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            
+            // 湘南新宿ライン
+            '浦和-keihin': {
+                car: 5,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+            '大宮-keihin': {
+                car: 3,
+                line: 'JR京浜東北線',
+                note: ''
+            },
+
+            // 埼京線
+            '川越-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '南古谷-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '指扇-saikyo': {
+                car: 7,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '西大宮-saikyo': {
+                car: 5,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '日進-saikyo': {
+                car: 4,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '大宮-saikyo': {
+                car: 7,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '北与野-saikyo': {
+                car: 8,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '与野本町-saikyo': {
+                car: 4,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '南与野-saikyo': {
+                car: 3,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '中浦和-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '武蔵浦和-saikyo': {
+                car: 4,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '北戸田-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '戸田-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '戸田公園-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '浮間舟渡-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '北赤羽-saikyo': {
+                car: 1,
+                line: 'JR埼京線',
+                note: '1号車または10号車'
+            },
+            '赤羽-saikyo': {
+                car: 10,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '板橋-saikyo': {
+                car: 1,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '池袋-saikyo': {
+                car: 7,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '新宿-saikyo-south': {
+                car: 5,
+                line: 'JR埼京線（新木場・海老名・大崎方面）東南改札・南改札方面',
+                note: '東南改札・南改札・小田急線のりかえ専用口方面'
+            },
+            '新宿-saikyo-south-kosha': {
+                car: 9,
+                line: 'JR埼京線（新木場・海老名・大崎方面）甲州街道改札方面',
+                note: '甲州街道改札・新南改札方面'
+            },
+            '新宿-saikyo-north': {
+                car: 1,
+                line: 'JR埼京線（武蔵浦和・大宮方面）東南改札・南改札方面',
+                note: '東南改札・南改札・小田急線のりかえ専用口方面'
+            },
+            '新宿-saikyo-north-kosha': {
+                car: 6,
+                line: 'JR埼京線（武蔵浦和・大宮方面）甲州街道改札方面',
+                note: '甲州街道改札・新南改札方面'
+            },
+            '渋谷-saikyo-shinnan': {
+                car: 9,
+                line: 'JR埼京線（新南改札方面）',
+                note: '新南改札方面'
+            },
+            '渋谷-saikyo-central': {
+                car: 3,
+                line: 'JR埼京線（中央改札方面）',
+                note: '中央改札・中央東改札、南改札方面'
+            },
+            '渋谷-saikyo-hachiko': {
+                car: 1,
+                line: 'JR埼京線（ハチ公改札方面）',
+                note: 'ハチ公改札方面'
+            },
+            '恵比寿-saikyo': {
+                car: 4,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '大崎-saikyo': {
+                car: 5,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '西大井-saikyo': {
+                car: 6,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '武蔵小杉-saikyo': {
+                car: 3,
+                line: 'JR埼京線',
+                note: ''
+            },
+            '羽沢横浜国大-saikyo-8': {
+                car: 3,
+                line: 'JR埼京線（8両編成）',
+                note: '8両編成の場合'
+            },
+            '羽沢横浜国大-saikyo-10': {
+                car: 5,
+                line: 'JR埼京線（10両編成）',
+                note: '10両編成の場合'
+            },
+
+            // りんかい線
+            '大崎-rinkai': {
+                car: 5,
+                line: 'りんかい線',
+                note: ''
+            },
+            '大井町-rinkai': {
+                car: 6,
+                line: 'りんかい線',
+                note: ''
+            },
+            '品川シーサイド-rinkai': {
+                car: 4,
+                line: 'りんかい線',
+                note: ''
+            },
+            '天王洲アイル-rinkai': {
+                car: 4,
+                line: 'りんかい線',
+                note: ''
+            },
+            '東京テレポート-rinkai': {
+                car: 5,
+                line: 'りんかい線',
+                note: ''
+            },
+            '国際展示場-rinkai': {
+                car: 5,
+                line: 'りんかい線',
+                note: ''
+            },
+            '東雲-rinkai': {
+                car: 3,
+                line: 'りんかい線',
+                note: ''
+            },
+            '新木場-rinkai': {
+                car: 8,
+                line: 'りんかい線',
+                note: ''
+            },
+
+            // 中央線
+            '東京-chuo': {
+                car: 1,
+                line: 'JR中央線',
+                note: ''
+            },
+            '神田-chuo-east': {
+                car: 9,
+                line: 'JR中央線（東口・北口方面）',
+                note: '東口・北口方面'
+            },
+            '神田-chuo-west': {
+                car: 3,
+                line: 'JR中央線（西口・南口方面）',
+                note: '西口・南口方面'
+            },
+            '御茶ノ水-chuo': {
+                car: 10,
+                line: 'JR中央線',
+                note: '改札・出口方面'
+            },
+            '四ツ谷-chuo': {
+                car: 8,
+                line: 'JR中央線',
+                note: '出口改札方面'
+            },
+            '新宿-chuo-tokyo-central': {
+                car: 3,
+                line: 'JR中央線（東京方面）中央東口・中央西口方面',
+                note: '中央東口・中央西口方面'
+            },
+            '新宿-chuo-tokyo-south': {
+                car: 7,
+                line: 'JR中央線（東京方面）東南改札・南改札・小田急のりかえ口方面',
+                note: '東南改札・南改札（東南口・南口）・小田急のりかえ口方面'
+            },
+            '高円寺-chuo': {
+                car: 4,
+                line: 'JR中央線',
+                note: ''
+            },
+            '阿佐ヶ谷-chuo': {
+                car: 3,
+                line: 'JR中央線',
+                note: ''
+            },
+            '荻窪-chuo-west': {
+                car: 9,
+                line: 'JR中央線（西口改札）',
+                note: '西口改札'
+            },
+            '荻窪-chuo-east': {
+                car: 4,
+                line: 'JR中央線（東口改札）',
+                note: '東口改札'
+            },
+            '西荻窪-chuo': {
+                car: 6,
+                line: 'JR中央線',
+                note: ''
+            },
+            '吉祥寺-chuo': {
+                car: 6,
+                line: 'JR中央線',
+                note: ''
+            },
+            '三鷹-chuo': {
+                car: 6,
+                line: 'JR中央線',
+                note: ''
+            },
+            '武蔵境-chuo': {
+                car: 6,
+                line: 'JR中央線',
+                note: ''
+            },
+            '東小金井-chuo': {
+                car: 5,
+                line: 'JR中央線',
+                note: ''
+            },
+            '武蔵小金井-chuo': {
+                car: 7,
+                line: 'JR中央線',
+                note: ''
+            },
+            '国分寺-chuo-takao-10': {
+                car: 6,
+                line: 'JR中央線（高尾方面・10両編成）',
+                note: '10両編成の場合'
+            },
+            '国分寺-chuo-takao-12': {
+                car: 8,
+                line: 'JR中央線（高尾方面・12両編成）',
+                note: '12両編成の場合'
+            },
+            '国分寺-chuo-tokyo': {
+                car: 8,
+                line: 'JR中央線（東京方面）',
+                note: ''
+            },
+            '西国分寺-chuo': {
+                car: 6,
+                line: 'JR中央線',
+                note: ''
+            },
+            '国立-chuo': {
+                car: 5,
+                line: 'JR中央線',
+                note: ''
+            },
+            '立川-chuo': {
+                car: 3,
+                line: 'JR中央線',
+                note: ''
+            },
+            '日野-chuo-takao': {
+                car: 4,
+                line: 'JR中央線（高尾方面）',
+                note: '高尾方面'
+            },
+            '日野-chuo-tokyo': {
+                car: 2,
+                line: 'JR中央線（東京方面）',
+                note: '東京方面'
+            },
+            '豊田-chuo': {
+                car: 5,
+                line: 'JR中央線',
+                note: ''
+            },
+            '八王子-chuo-takao': {
+                car: 2,
+                line: 'JR中央線（高尾方面）',
+                note: '高尾方面'
+            },
+            '八王子-chuo-tokyo': {
+                car: 4,
+                line: 'JR中央線（東京方面）',
+                note: '東京方面'
+            },
+            '西八王子-chuo': {
+                car: 6,
+                line: 'JR中央線',
+                note: ''
+            },
+
+            // 京葉線
+            '東京-keiyo': {
+                car: 4,
+                line: 'JR京葉線',
+                note: ''
+            },
+            '八丁堀-keiyo-10': {
+                car: 6,
+                line: 'JR京葉線（10両編成）',
+                note: ''
+            },
+            '八丁堀-keiyo-8': {
+                car: 4,
+                line: 'JR京葉線（8両編成）',
+                note: ''
+            },
+            '越中島-keiyo-10': {
+                car: 5,
+                line: 'JR京葉線（10両編成）',
+                note: ''
+            },
+            '越中島-keiyo-8': {
+                car: 3,
+                line: 'JR京葉線（8両編成）',
+                note: ''
+            },
+            '潮見-keiyo-10': {
+                car: 5,
+                line: 'JR京葉線（10両編成）',
+                note: ''
+            },
+            '潮見-keiyo-8': {
+                car: 3,
+                line: 'JR京葉線（8両編成）',
+                note: ''
+            },
+            '新木場-keiyo-1': {
+                car: 3,
+                line: 'JR京葉線',
+                note: ''
+            },
+            '新木場-keiyo-2': {
+                car: 5,
+                line: 'JR京葉線',
+                note: ''
+            },
+            '葛西臨海公園-keiyo-10': {
+                car: 5,
+                line: 'JR京葉線（10両編成）',
+                note: ''
+            },
+            '葛西臨海公園-keiyo-8': {
+                car: 4,
+                line: 'JR京葉線（8両編成）',
+                note: ''
+            },
+            '舞浜-keiyo-10': {
+                car: 5,
+                line: 'JR京葉線（10両編成）',
+                note: ''
+            },
+            '舞浜-keiyo-8': {
+                car: 4,
+                line: 'JR京葉線（8両編成）',
+                note: ''
+            },
+            '新浦安-keiyo-10': {
+                car: 4,
+                line: 'JR京葉線（10両編成）',
+                note: ''
+            },
+            '新浦安-keiyo-8': {
+                car: 2,
+                line: 'JR京葉線（8両編成）',
+                note: ''
+            },
+            '市川塩浜-keiyo-10': {
+                car: 6,
+                line: 'JR京葉線（10両編成）',
+                note: ''
+            },
+            '市川塩浜-keiyo-8': {
+                car: 4,
+                line: 'JR京葉線（8両編成）',
+                note: ''
+            },
+            '二俣新町-keiyo': {
+                car: 8,
+                line: 'JR京葉線',
+                note: ''
+            },
+            '南船橋-keiyo-10': {
+                car: 3,
+                line: 'JR京葉線（10両編成）',
+                note: ''
+            },
+            '南船橋-keiyo-8': {
+                car: 6,
+                line: 'JR京葉線（8両編成）',
+                note: ''
+            },
+            '新習志野-keiyo': {
+                car: 5,
+                line: 'JR京葉線',
+                note: ''
+            },
+            '海浜幕張-keiyo-10': {
+                car: 4,
+                line: 'JR京葉線（10両編成）',
+                note: ''
+            },
+            '海浜幕張-keiyo-8': {
+                car: 7,
+                line: 'JR京葉線（8両編成）',
+                note: ''
+            },
+            '検見川浜-keiyo': {
+                car: 7,
+                line: 'JR京葉線',
+                note: ''
+            },
+            '稲毛海岸-keiyo': {
+                car: 5,
+                line: 'JR京葉線',
+                note: ''
+            },
+            '千葉みなと-keiyo': {
+                car: 4,
+                line: 'JR京葉線',
+                note: ''
+            },
+            '蘇我-keiyo': {
+                car: 10,
+                line: 'JR京葉線',
+                note: ''
+            },
+
+            // 横浜線（JH）
+            '八王子-yokohama': { car: 7, line: 'JR横浜線', note: '' },
+            '片倉-yokohama': { car: 6, line: 'JR横浜線', note: '' },
+            '八王子みなみ野-yokohama': { car: 4, line: 'JR横浜線', note: '' },
+            '相原-yokohama-higashi': { car: 4, line: 'JR横浜線 東神奈川方面', note: '' },
+            '相原-yokohama-hachioji': { car: 3, line: 'JR横浜線 八王子方面', note: '' },
+            '橋本-yokohama': { car: 2, line: 'JR横浜線', note: '' },
+            '相模原-yokohama': { car: 3, line: 'JR横浜線', note: '' },
+            '矢部-yokohama': { car: 4, line: 'JR横浜線', note: '' },
+            '淵野辺-yokohama': { car: 3, line: 'JR横浜線', note: '' },
+            '古淵-yokohama': { car: 4, line: 'JR横浜線', note: '' },
+            '町田-yokohama': { car: 5, line: 'JR横浜線', note: '' },
+            '成瀬-yokohama': { car: 4, line: 'JR横浜線', note: '' },
+            '長津田-yokohama': { car: 4, line: 'JR横浜線', note: '' },
+            '十日市場-yokohama': { car: 6, line: 'JR横浜線', note: '' },
+            '中山-yokohama': { car: 1, line: 'JR横浜線', note: '' },
+            '鴨居-yokohama': { car: 4, line: 'JR横浜線', note: '' },
+            '小机-yokohama-higashi': { car: 3, line: 'JR横浜線 東神奈川方面', note: '' },
+            '小机-yokohama-hachioji': { car: 6, line: 'JR横浜線 八王子方面', note: '' },
+            '新横浜-yokohama': { car: 5, line: 'JR横浜線', note: '' },
+            '菊名-yokohama': { car: 1, line: 'JR横浜線', note: '' },
+            '大口-yokohama': { car: 3, line: 'JR横浜線', note: '' },
+            '東神奈川-yokohama-10': { car: 7, line: 'JR横浜線・根岸線（10両編成）', note: '' },
+            '東神奈川-yokohama-8': { car: 5, line: 'JR横浜線・根岸線（8両編成）', note: '' },
+
+            // 根岸線（JK）
+            '横浜-negishi-minami': { car: 2, line: 'JR横浜線・根岸線', note: '南改札・中央南改札方面' },
+            '横浜-negishi-kita': { car: 8, line: 'JR横浜線・根岸線', note: '北改札方面' },
+            '桜木町-negishi-ofuna-minami': { car: 1, line: 'JR根岸線 大船方面', note: '南改札方面' },
+            '桜木町-negishi-ofuna-kita-10': { car: 6, line: 'JR根岸線（10両編成）大船方面', note: '北改札方面' },
+            '桜木町-negishi-ofuna-kita-8': { car: 4, line: 'JR根岸線（8両編成）大船方面', note: '北改札方面' },
+            '桜木町-negishi-omiya': { car: 6, line: 'JR根岸線 大宮方面', note: '北改札方面' },
+            '関内-negishi-10': { car: 9, line: 'JR根岸線（10両編成）', note: '' },
+            '関内-negishi-8': { car: 8, line: 'JR根岸線（8両編成）', note: '' },
+            '石川町-negishi-minami-10': { car: 2, line: 'JR根岸線（10両編成）', note: '元町口（南口）方面' },
+            '石川町-negishi-minami-8': { car: 1, line: 'JR根岸線（8両編成）', note: '元町口（南口）方面' },
+            '石川町-negishi-kita-10': { car: 9, line: 'JR根岸線（10両編成）', note: '中華街口（北口）方面' },
+            '石川町-negishi-kita-8': { car: 8, line: 'JR根岸線（8両編成）', note: '中華街口（北口）方面' },
+            '山手-negishi-10': { car: 8, line: 'JR根岸線（10両編成）', note: '' },
+            '山手-negishi-8': { car: 6, line: 'JR根岸線（8両編成）', note: '' },
+            '根岸-negishi': { car: 2, line: 'JR根岸線', note: '' },
+            '磯子-negishi-10': { car: 2, line: 'JR根岸線（10両編成）', note: '' },
+            '磯子-negishi-8': { car: 1, line: 'JR根岸線（8両編成）', note: '' },
+            '新杉田-negishi-ofuna-10': { car: 5, line: 'JR根岸線（10両編成）大船方面', note: '' },
+            '新杉田-negishi-ofuna-8': { car: 3, line: 'JR根岸線（8両編成）大船方面', note: '' },
+            '新杉田-negishi-omiya': { car: 6, line: 'JR根岸線 大宮方面', note: '' },
+            '洋光台-negishi': { car: 5, line: 'JR根岸線', note: '' },
+            '港南台-negishi-ofuna': { car: 7, line: 'JR根岸線 大船方面', note: '' },
+            '港南台-negishi-omiya-10': { car: 7, line: 'JR根岸線（10両編成）大宮方面', note: '' },
+            '港南台-negishi-omiya-8': { car: 5, line: 'JR根岸線（8両編成）大宮方面', note: '' },
+            '本郷台-negishi-10': { car: 5, line: 'JR根岸線（10両編成）', note: '' },
+            '本郷台-negishi-8': { car: 4, line: 'JR根岸線（8両編成）', note: '' },
+            '大船-negishi': { car: 8, line: 'JR根岸線', note: '' },
+
+            // 宇都宮線（JU）
+            '宇都宮-utsunomiya-platform78-15': { car: 10, line: 'JR宇都宮線（15両編成）', note: '7・8番ホーム' },
+            '宇都宮-utsunomiya-platform78-10': { car: 6, line: 'JR宇都宮線（10両編成）', note: '7・8番ホーム' },
+            '宇都宮-utsunomiya-platform10': { car: 3, line: 'JR宇都宮線', note: '10番ホーム' },
+            '雀宮-utsunomiya-tokyo': { car: 5, line: 'JR宇都宮線 上野・新宿方面', note: '' },
+            '雀宮-utsunomiya-utsunomiya': { car: 7, line: 'JR宇都宮線 宇都宮方面', note: '' },
+            '石橋-utsunomiya-15': { car: 11, line: 'JR宇都宮線（15両編成）', note: '' },
+            '石橋-utsunomiya-10': { car: 9, line: 'JR宇都宮線（10両編成）', note: '' },
+            '自治医大-utsunomiya-15': { car: 8, line: 'JR宇都宮線（15両編成）', note: '' },
+            '自治医大-utsunomiya-10': { car: 6, line: 'JR宇都宮線（10両編成）', note: '' },
+            '小金井-utsunomiya-tokyo': { car: 4, line: 'JR宇都宮線 上野・新宿方面', note: '' },
+            '小金井-utsunomiya-utsunomiya-15': { car: 8, line: 'JR宇都宮線（15両編成）宇都宮方面', note: '' },
+            '小金井-utsunomiya-utsunomiya-10': { car: 3, line: 'JR宇都宮線（10両編成）宇都宮方面', note: '' },
+            '小山-utsunomiya-tokyo-15': { car: 13, line: 'JR宇都宮線（15両編成）上野・新宿方面', note: '' },
+            '小山-utsunomiya-tokyo-10': { car: 8, line: 'JR宇都宮線（10両編成）上野・新宿方面', note: '' },
+            '小山-utsunomiya-utsunomiya-15': { car: 14, line: 'JR宇都宮線（15両編成）宇都宮方面', note: '' },
+            '小山-utsunomiya-utsunomiya-10': { car: 9, line: 'JR宇都宮線（10両編成）宇都宮方面', note: '' },
+            '間々田-utsunomiya-15': { car: 9, line: 'JR宇都宮線（15両編成）', note: '' },
+            '間々田-utsunomiya-10': { car: 7, line: 'JR宇都宮線（10両編成）', note: '' },
+            '野木-utsunomiya-tokyo-15': { car: 10, line: 'JR宇都宮線（15両編成）上野・新宿方面', note: '' },
+            '野木-utsunomiya-tokyo-10': { car: 9, line: 'JR宇都宮線（10両編成）上野・新宿方面', note: '' },
+            '野木-utsunomiya-utsunomiya-15': { car: 11, line: 'JR宇都宮線（15両編成）宇都宮方面', note: '' },
+            '野木-utsunomiya-utsunomiya-10': { car: 8, line: 'JR宇都宮線（10両編成）宇都宮方面', note: '' },
+            '古河-utsunomiya-tokyo-15': { car: 9, line: 'JR宇都宮線（15両編成）上野・新宿方面', note: '' },
+            '古河-utsunomiya-tokyo-10': { car: 7, line: 'JR宇都宮線（10両編成）上野・新宿方面', note: '' },
+            '古河-utsunomiya-utsunomiya-15': { car: 10, line: 'JR宇都宮線（15両編成）宇都宮方面', note: '' },
+            '古河-utsunomiya-utsunomiya-10': { car: 7, line: 'JR宇都宮線（10両編成）宇都宮方面', note: '' },
+            '栗橋-utsunomiya-15': { car: 14, line: 'JR宇都宮線（15両編成）', note: '' },
+            '栗橋-utsunomiya-10': { car: 9, line: 'JR宇都宮線（10両編成）', note: '' },
+            '東鷲宮-utsunomiya-15': { car: 8, line: 'JR宇都宮線（15両編成）', note: '' },
+            '東鷲宮-utsunomiya-10': { car: 6, line: 'JR宇都宮線（10両編成）', note: '' },
+            '久喜-utsunomiya-tokyo-15': { car: 4, line: 'JR宇都宮線（15両編成）上野・新宿方面', note: '' },
+            '久喜-utsunomiya-tokyo-10': { car: 3, line: 'JR宇都宮線（10両編成）上野・新宿方面', note: '' },
+            '久喜-utsunomiya-utsunomiya-15': { car: 6, line: 'JR宇都宮線（15両編成）宇都宮方面', note: '' },
+            '久喜-utsunomiya-utsunomiya-10': { car: 3, line: 'JR宇都宮線（10両編成）宇都宮方面', note: '' },
+            '新白岡-utsunomiya-tokyo-15': { car: 9, line: 'JR宇都宮線（15両編成）上野・新宿方面', note: '' },
+            '新白岡-utsunomiya-tokyo-10': { car: 7, line: 'JR宇都宮線（10両編成）上野・新宿方面', note: '' },
+            '新白岡-utsunomiya-utsunomiya-15': { car: 9, line: 'JR宇都宮線（15両編成）宇都宮方面', note: '' },
+            '新白岡-utsunomiya-utsunomiya-10': { car: 6, line: 'JR宇都宮線（10両編成）宇都宮方面', note: '' },
+            '白岡-utsunomiya': { car: 5, line: 'JR宇都宮線', note: '' },
+            '蓮田-utsunomiya-tokyo-15': { car: 9, line: 'JR宇都宮線（15両編成）上野・新宿方面', note: '' },
+            '蓮田-utsunomiya-tokyo-10': { car: 6, line: 'JR宇都宮線（10両編成）上野・新宿方面', note: '' },
+            '蓮田-utsunomiya-utsunomiya-15': { car: 12, line: 'JR宇都宮線（15両編成）宇都宮方面', note: '' },
+            '蓮田-utsunomiya-utsunomiya-10': { car: 6, line: 'JR宇都宮線（10両編成）宇都宮方面', note: '' },
+            '東大宮-utsunomiya-tokyo-15': { car: 9, line: 'JR宇都宮線（15両編成）上野・新宿方面', note: '' },
+            '東大宮-utsunomiya-tokyo-10': { car: 7, line: 'JR宇都宮線（10両編成）上野・新宿方面', note: '' },
+            '東大宮-utsunomiya-utsunomiya-15': { car: 9, line: 'JR宇都宮線（15両編成）宇都宮方面', note: '' },
+            '東大宮-utsunomiya-utsunomiya-10': { car: 5, line: 'JR宇都宮線（10両編成）宇都宮方面', note: '' },
+            '土呂-utsunomiya-15': { car: 7, line: 'JR宇都宮線（15両編成）', note: '' },
+            '土呂-utsunomiya-10': { car: 4, line: 'JR宇都宮線（10両編成）', note: '' },
+            '大宮-utsunomiya-tokyo-platform34-15': { car: 7, line: 'JR宇都宮線（15両編成）上野・新宿方面', note: '3番・4番ホーム' },
+            '大宮-utsunomiya-tokyo-platform34-10': { car: 5, line: 'JR宇都宮線（10両編成）上野・新宿方面', note: '3番・4番ホーム' },
+            '大宮-utsunomiya-utsunomiya-platform9': { car: 2, line: 'JR宇都宮線 宇都宮方面', note: '9番ホーム' },
+            '大宮-utsunomiya-utsunomiya-platform11-kita-15': { car: 10, line: 'JR宇都宮線（15両編成）宇都宮方面', note: '11番ホーム・中央改札（北）・北改札方面' },
+            '大宮-utsunomiya-utsunomiya-platform11-kita-10': { car: 9, line: 'JR宇都宮線（10両編成）宇都宮方面', note: '11番ホーム・中央改札（北）・北改札方面' },
+            '大宮-utsunomiya-utsunomiya-platform11-minami-15': { car: 6, line: 'JR宇都宮線（15両編成）宇都宮方面', note: '11番ホーム・中央改札（南）・南改札方面' },
+            '大宮-utsunomiya-utsunomiya-platform11-minami-10': { car: 5, line: 'JR宇都宮線（10両編成）宇都宮方面', note: '11番ホーム・中央改札（南）・南改札方面' },
+            'さいたま新都心-utsunomiya-15': { car: 8, line: 'JR宇都宮線（15両編成）', note: '' },
+            'さいたま新都心-utsunomiya-10': { car: 6, line: 'JR宇都宮線（10両編成）', note: '' },
+            '浦和-utsunomiya-15': { car: 8, line: 'JR宇都宮線（15両編成）', note: '' },
+            '浦和-utsunomiya-10': { car: 5, line: 'JR宇都宮線（10両編成）', note: '' },
+            '赤羽-utsunomiya-ueno-15': { car: 4, line: 'JR宇都宮線（15両編成）上野方面', note: '' },
+            '赤羽-utsunomiya-ueno-10': { car: 2, line: 'JR宇都宮線（10両編成）上野方面', note: '' },
+            '赤羽-utsunomiya-omiya-15': { car: 4, line: 'JR宇都宮線（15両編成）大宮方面', note: '' },
+            '赤羽-utsunomiya-omiya-10': { car: 1, line: 'JR宇都宮線（10両編成）大宮方面', note: '' },
+            '尾久-utsunomiya-ueno-15': { car: 3, line: 'JR宇都宮線（15両編成）上野方面', note: '' },
+            '尾久-utsunomiya-ueno-10': { car: 1, line: 'JR宇都宮線（10両編成）上野方面', note: '' },
+            '尾久-utsunomiya-omiya-15': { car: 4, line: 'JR宇都宮線（15両編成）大宮方面', note: '' },
+            '尾久-utsunomiya-omiya-10': { car: 1, line: 'JR宇都宮線（10両編成）大宮方面', note: '' },
+            '上野-utsunomiya-15': { car: 7, line: 'JR宇都宮線（15両編成）', note: '' },
+            '上野-utsunomiya-10': { car: 3, line: 'JR宇都宮線（10両編成）', note: '' },
+            '上野-utsunomiya-platform16-15': { car: 2, line: 'JR宇都宮線（15両編成）', note: '16番ホーム（上野止まり）' },
+            '上野-utsunomiya-platform16-10': { car: 1, line: 'JR宇都宮線（10両編成）', note: '16番ホーム（上野止まり）' },
+            '東京-utsunomiya-atami': { car: 7, line: 'JR宇都宮線 熱海方面', note: '' },
+            '東京-utsunomiya-ueno-kita': { car: 10, line: 'JR宇都宮線 上野方面', note: '八重洲北口・丸の内北口方面' },
+            '東京-utsunomiya-ueno-minami': { car: 3, line: 'JR宇都宮線 上野方面', note: '八重洲南口・丸の内南口方面' },
+
+            // 高崎線（JT）
+            '高崎-takasaki-platform2': { car: 6, line: 'JR高崎線', note: '2番ホーム（大宮方面から当駅止まり）' },
+            '高崎-takasaki-platform4': { car: 5, line: 'JR高崎線', note: '4番ホーム（大宮方面から当駅止まり）' },
+            '高崎-takasaki-platform78': { car: 8, line: 'JR高崎線', note: '7・8番ホーム' },
+            '新町-takasaki': { car: 3, line: 'JR高崎線', note: '' },
+            '神保原-takasaki-ueno': { car: 4, line: 'JR高崎線 上野・新宿方面', note: '' },
+            '神保原-takasaki-takasaki': { car: 1, line: 'JR高崎線 高崎方面', note: '' },
+            '本庄-takasaki-ueno': { car: 7, line: 'JR高崎線 上野・新宿方面', note: '' },
+            '本庄-takasaki-takasaki': { car: 6, line: 'JR高崎線 高崎方面', note: '' },
+            '岡部-takasaki-ueno': { car: 10, line: 'JR高崎線 上野・新宿方面', note: '' },
+            '岡部-takasaki-takasaki': { car: 6, line: 'JR高崎線 高崎方面', note: '' },
+            '深谷-takasaki-ueno': { car: 8, line: 'JR高崎線 上野・新宿方面', note: '' },
+            '深谷-takasaki-takasaki': { car: 5, line: 'JR高崎線 高崎方面', note: '' },
+            '籠原-takasaki-ueno-15': { car: 9, line: 'JR高崎線（15両編成）上野・新宿方面', note: '' },
+            '籠原-takasaki-ueno-10': { car: 7, line: 'JR高崎線（10両編成）上野・新宿方面', note: '' },
+            '籠原-takasaki-ueno-terminal-15': { car: 9, line: 'JR高崎線（15両編成）上野・新宿方面', note: '上野・新宿方面から当駅止まり' },
+            '籠原-takasaki-ueno-terminal-10': { car: 5, line: 'JR高崎線（10両編成）上野・新宿方面', note: '上野・新宿方面から当駅止まり' },
+            '籠原-takasaki-takasaki-15': { car: 9, line: 'JR高崎線（15両編成）高崎方面', note: '' },
+            '籠原-takasaki-takasaki-10': { car: 6, line: 'JR高崎線（10両編成）高崎方面', note: '' },
+            '熊谷-takasaki-ueno-15': { car: 7, line: 'JR高崎線（15両編成）上野・新宿方面', note: '' },
+            '熊谷-takasaki-ueno-10': { car: 5, line: 'JR高崎線（10両編成）上野・新宿方面', note: '' },
+            '熊谷-takasaki-takasaki-15': { car: 7, line: 'JR高崎線（15両編成）高崎方面', note: '' },
+            '熊谷-takasaki-takasaki-10': { car: 6, line: 'JR高崎線（10両編成）高崎方面', note: '' },
+            '行田-takasaki-15': { car: 8, line: 'JR高崎線（15両編成）', note: '' },
+            '行田-takasaki-10': { car: 6, line: 'JR高崎線（10両編成）', note: '' },
+            '吹上-takasaki-ueno-15': { car: 8, line: 'JR高崎線（15両編成）上野・新宿方面', note: '' },
+            '吹上-takasaki-ueno-10': { car: 5, line: 'JR高崎線（10両編成）上野・新宿方面', note: '' },
+            '吹上-takasaki-takasaki-15': { car: 12, line: 'JR高崎線（15両編成）高崎方面', note: '' },
+            '吹上-takasaki-takasaki-10': { car: 9, line: 'JR高崎線（10両編成）高崎方面', note: '' },
+            '北鴻巣-takasaki-ueno-15': { car: 7, line: 'JR高崎線（15両編成）上野・新宿方面', note: '' },
+            '北鴻巣-takasaki-ueno-10': { car: 4, line: 'JR高崎線（10両編成）上野・新宿方面', note: '' },
+            '北鴻巣-takasaki-takasaki-15': { car: 7, line: 'JR高崎線（15両編成）高崎方面', note: '' },
+            '北鴻巣-takasaki-takasaki-10': { car: 5, line: 'JR高崎線（10両編成）高崎方面', note: '' },
+            '鴻巣-takasaki-ueno': { car: 3, line: 'JR高崎線 上野・新宿方面', note: '' },
+            '鴻巣-takasaki-takasaki-15': { car: 11, line: 'JR高崎線（15両編成）高崎方面', note: '' },
+            '鴻巣-takasaki-takasaki-10': { car: 6, line: 'JR高崎線（10両編成）高崎方面', note: '' },
+            '北本-takasaki-ueno': { car: 6, line: 'JR高崎線 上野・新宿方面', note: '' },
+            '北本-takasaki-takasaki-15': { car: 8, line: 'JR高崎線（15両編成）高崎方面', note: '' },
+            '北本-takasaki-takasaki-10': { car: 6, line: 'JR高崎線（10両編成）高崎方面', note: '' },
+            '桶川-takasaki-ueno-15': { car: 5, line: 'JR高崎線（15両編成）上野・新宿方面', note: '' },
+            '桶川-takasaki-ueno-10': { car: 2, line: 'JR高崎線（10両編成）上野・新宿方面', note: '' },
+            '桶川-takasaki-takasaki-15': { car: 9, line: 'JR高崎線（15両編成）高崎方面', note: '' },
+            '桶川-takasaki-takasaki-10': { car: 7, line: 'JR高崎線（10両編成）高崎方面', note: '' },
+            '北上尾-takasaki-ueno-15': { car: 9, line: 'JR高崎線（15両編成）上野・新宿方面', note: '' },
+            '北上尾-takasaki-ueno-10': { car: 6, line: 'JR高崎線（10両編成）上野・新宿方面', note: '' },
+            '北上尾-takasaki-takasaki-15': { car: 10, line: 'JR高崎線（15両編成）高崎方面', note: '' },
+            '北上尾-takasaki-takasaki-10': { car: 5, line: 'JR高崎線（10両編成）高崎方面', note: '' },
+            '上尾-takasaki-15': { car: 9, line: 'JR高崎線（15両編成）', note: '' },
+            '上尾-takasaki-10': { car: 6, line: 'JR高崎線（10両編成）', note: '' },
+            '宮原-takasaki-ueno-15': { car: 5, line: 'JR高崎線（15両編成）上野・新宿方面', note: '' },
+            '宮原-takasaki-ueno-10': { car: 2, line: 'JR高崎線（10両編成）上野・新宿方面', note: '' },
+            '宮原-takasaki-takasaki-15': { car: 5, line: 'JR高崎線（15両編成）高崎方面', note: '' },
+            '宮原-takasaki-takasaki-10': { car: 3, line: 'JR高崎線（10両編成）高崎方面', note: '' },
+            '大宮-takasaki-ueno-platform6-15': { car: 5, line: 'JR高崎線（15両編成）上野・新宿方面', note: '6番ホーム' },
+            '大宮-takasaki-ueno-platform6-10': { car: 3, line: 'JR高崎線（10両編成）上野・新宿方面', note: '6番ホーム' },
+            '大宮-takasaki-ueno-platform7-15': { car: 5, line: 'JR高崎線（15両編成）上野・新宿方面', note: '7番ホーム' },
+            '大宮-takasaki-ueno-platform7-10': { car: 2, line: 'JR高崎線（10両編成）上野・新宿方面', note: '7番ホーム' },
+            '大宮-takasaki-takasaki-platform8-15': { car: 6, line: 'JR高崎線（15両編成）高崎方面', note: '8番ホーム' },
+            '大宮-takasaki-takasaki-platform8-10': { car: 2, line: 'JR高崎線（10両編成）高崎方面', note: '8番ホーム' },
+            '大宮-takasaki-takasaki-platform11-kita-15': { car: 10, line: 'JR高崎線（15両編成）高崎方面', note: '11番ホーム・中央改札（北）・北改札方面' },
+            '大宮-takasaki-takasaki-platform11-kita-10': { car: 9, line: 'JR高崎線（10両編成）高崎方面', note: '11番ホーム・中央改札（北）・北改札方面' },
+            '大宮-takasaki-takasaki-platform11-minami-15': { car: 6, line: 'JR高崎線（15両編成）高崎方面', note: '11番ホーム・中央改札（南）・南改札方面' },
+            '大宮-takasaki-takasaki-platform11-minami-10': { car: 5, line: 'JR高崎線（10両編成）高崎方面', note: '11番ホーム・中央改札（南）・南改札方面' },
+            'さいたま新都心-takasaki-ueno-15': { car: 8, line: 'JR高崎線（15両編成）上野方面', note: '' },
+            'さいたま新都心-takasaki-ueno-10': { car: 5, line: 'JR高崎線（10両編成）上野方面', note: '' },
+            'さいたま新都心-takasaki-omiya-15': { car: 8, line: 'JR高崎線（15両編成）大宮方面', note: '' },
+            'さいたま新都心-takasaki-omiya-10': { car: 6, line: 'JR高崎線（10両編成）大宮方面', note: '' },
+            '浦和-takasaki-15': { car: 8, line: 'JR高崎線（15両編成）', note: '' },
+            '浦和-takasaki-10': { car: 5, line: 'JR高崎線（10両編成）', note: '' },
+            '赤羽-takasaki-ueno-15': { car: 4, line: 'JR高崎線（15両編成）上野方面', note: '' },
+            '赤羽-takasaki-ueno-10': { car: 2, line: 'JR高崎線（10両編成）上野方面', note: '' },
+            '赤羽-takasaki-omiya-15': { car: 4, line: 'JR高崎線（15両編成）大宮方面', note: '' },
+            '赤羽-takasaki-omiya-10': { car: 1, line: 'JR高崎線（10両編成）大宮方面', note: '' },
+            '尾久-takasaki-ueno-15': { car: 3, line: 'JR高崎線（15両編成）上野方面', note: '' },
+            '尾久-takasaki-ueno-10': { car: 1, line: 'JR高崎線（10両編成）上野方面', note: '' },
+            '尾久-takasaki-omiya-15': { car: 4, line: 'JR高崎線（15両編成）大宮方面', note: '' },
+            '尾久-takasaki-omiya-10': { car: 1, line: 'JR高崎線（10両編成）大宮方面', note: '' },
+            '上野-takasaki-tokyo-15': { car: 7, line: 'JR高崎線（15両編成）東京方面', note: '' },
+            '上野-takasaki-tokyo-10': { car: 3, line: 'JR高崎線（10両編成）東京方面', note: '' },
+            '上野-takasaki-omiya-terminal-15': { car: 2, line: 'JR高崎線（15両編成）大宮方面から当駅止まり', note: '' },
+            '上野-takasaki-omiya-terminal-10': { car: 1, line: 'JR高崎線（10両編成）大宮方面から当駅止まり', note: '' },
+            '上野-takasaki-omiya-15': { car: 7, line: 'JR高崎線（15両編成）大宮方面', note: '' },
+            '上野-takasaki-omiya-10': { car: 3, line: 'JR高崎線（10両編成）大宮方面', note: '' },
+            '東京-takasaki-atami': { car: 7, line: 'JR高崎線 熱海方面', note: '' },
+            '東京-takasaki-ueno-kita': { car: 10, line: 'JR高崎線 上野方面', note: '八重洲北口・丸の内北口方面' },
+            '東京-takasaki-ueno-minami': { car: 3, line: 'JR高崎線 上野方面', note: '八重洲南口・丸の内南口方面' },
+
+
+            '千葉-sobu': {
+                car: 3,
+                line: 'JR中央・総武線（千葉方面）',
+                note: '当駅止まり'
+            },
+            '西千葉-sobu': {
+                car: 6,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '稲毛-sobu': {
+                car: 6,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '新検見川-sobu-mitaka': {
+                car: 7,
+                line: 'JR中央・総武線（三鷹方面）',
+                note: ''
+            },
+            '新検見川-sobu-chiba': {
+                car: 6,
+                line: 'JR中央・総武線（千葉方面）',
+                note: ''
+            },
+            '幕張-sobu-mitaka': {
+                car: 6,
+                line: 'JR中央・総武線（三鷹方面）',
+                note: ''
+            },
+            '幕張-sobu-chiba': {
+                car: 6,
+                line: 'JR中央・総武線（千葉方面）',
+                note: ''
+            },
+            '幕張本郷-sobu': {
+                car: 5,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '津田沼-sobu': {
+                car: 6,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '東船橋-sobu': {
+                car: 5,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '船橋-sobu': {
+                car: 5,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '西船橋-sobu-mitaka': {
+                car: 4,
+                line: 'JR中央・総武線（三鷹方面）',
+                note: '改札口（南口・北口）方面'
+            },
+            '西船橋-sobu-chiba': {
+                car: 4,
+                line: 'JR中央・総武線（千葉方面）',
+                note: '改札口（南口・北口）方面'
+            },
+            '下総中山-sobu': {
+                car: 5,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '本八幡-sobu': {
+                car: 5,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '市川-sobu': {
+                car: 5,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '小岩-sobu': {
+                car: 5,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '新小岩-sobu': {
+                car: 5,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '平井-sobu': {
+                car: 4,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '亀戸-sobu': {
+                car: 7,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '錦糸町-sobu': {
+                car: 6,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '両国-sobu': {
+                car: 8,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '浅草橋-sobu-mitaka': {
+                car: 7,
+                line: 'JR中央・総武線（三鷹方面）',
+                note: '西口改札方面'
+            },
+            '浅草橋-sobu-chiba': {
+                car: 8,
+                line: 'JR中央・総武線（千葉方面）',
+                note: '西口改札方面'
+            },
+            '秋葉原-sobu-yamanote': {
+                car: 5,
+                line: 'JR中央・総武線',
+                note: 'JR山手線・京浜東北線３・４番線ホーム連絡'
+            },
+            '秋葉原-sobu-exit': {
+                car: 4,
+                line: 'JR中央・総武線',
+                note: '昭和通り改札・電気街改札・中央改札方面'
+            },
+            '御茶ノ水-sobu': {
+                car: 10,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '水道橋-sobu': {
+                car: 1,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '飯田橋-sobu': {
+                car: 4,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '市ケ谷-sobu': {
+                car: 8,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '四ツ谷-sobu': {
+                car: 5,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '信濃町-sobu-1': {
+                car: 7,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '信濃町-sobu-2': {
+                car: 5,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '千駄ヶ谷-sobu-mitaka': {
+                car: 7,
+                line: 'JR中央・総武線（三鷹方面）',
+                note: ''
+            },
+            '千駄ヶ谷-sobu-chiba': {
+                car: 9,
+                line: 'JR中央・総武線（千葉方面）',
+                note: ''
+            },
+            '代々木-sobu': {
+                car: 1,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '新宿-sobu-eastwest': {
+                car: 8,
+                line: 'JR中央・総武線',
+                note: '東改札、西改札方面'
+            },
+            '新宿-sobu-south': {
+                car: 1,
+                line: 'JR中央・総武線',
+                note: '東南改札・南改札方面'
+            },
+            '大久保-sobu': {
+                car: 10,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '東中野-sobu': {
+                car: 10,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '中野-sobu': {
+                car: null,
+                line: 'JR中央・総武線',
+                note: 'エレベーターなし（2026年設置予定）'
+            },
+            '高円寺-sobu': {
+                car: 5,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '阿佐ヶ谷-sobu': {
+                car: 4,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '荻窪-sobu-west': {
+                car: 10,
+                line: 'JR中央・総武線',
+                note: '西口改札方面'
+            },
+            '荻窪-sobu-east': {
+                car: 6,
+                line: 'JR中央・総武線',
+                note: '東改札方面'
+            },
+            '西荻窪-sobu': {
+                car: 3,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '吉祥寺-sobu': {
+                car: 6,
+                line: 'JR中央・総武線',
+                note: ''
+            },
+            '三鷹-sobu': {
+                car: 3,
+                line: 'JR中央・総武線（千葉方面）',
+                note: '当駅止まり'
+            },
+
+            // 湘南新宿ライン
+            // 大宮駅（宇都宮線・高崎線経由）
+            '大宮-shonan-utsunomiya-platform34-15': { car: 7, line: 'JR湘南新宿ライン（15両編成）宇都宮方面からの上野・新宿方面', note: '3・4番ホーム' },
+            '大宮-shonan-utsunomiya-platform34-10': { car: 5, line: 'JR湘南新宿ライン（10両編成）宇都宮方面からの上野・新宿方面', note: '3・4番ホーム' },
+            '大宮-shonan-takasaki-platform6-15': { car: 5, line: 'JR湘南新宿ライン（15両編成）高崎方面からの上野・新宿方面', note: '6番ホーム' },
+            '大宮-shonan-takasaki-platform6-10': { car: 3, line: 'JR湘南新宿ライン（10両編成）高崎方面からの上野・新宿方面', note: '6番ホーム' },
+            '大宮-shonan-takasaki-platform7-15': { car: 5, line: 'JR湘南新宿ライン（15両編成）高崎方面からの上野・新宿方面', note: '7番ホーム' },
+            '大宮-shonan-takasaki-platform7-10': { car: 2, line: 'JR湘南新宿ライン（10両編成）高崎方面からの上野・新宿方面', note: '7番ホーム' },
+            '大宮-shonan-reverse-platform11-kita-15': { car: 10, line: 'JR湘南新宿ライン（15両編成）新宿方面からの宇都宮・高崎方面', note: '11番ホーム・中央改札（北）・北改札方面・新幹線北のりかえ口方面' },
+            '大宮-shonan-reverse-platform11-kita-10': { car: 9, line: 'JR湘南新宿ライン（10両編成）新宿方面からの宇都宮・高崎方面', note: '11番ホーム・中央改札（北）・北改札方面・新幹線北のりかえ口方面' },
+            '大宮-shonan-reverse-platform11-minami-15': { car: 6, line: 'JR湘南新宿ライン（15両編成）新宿方面からの宇都宮・高崎方面', note: '11番ホーム・中央改札（南）・南改札方面・新幹線南のりかえ口方面' },
+            '大宮-shonan-reverse-platform11-minami-10': { car: 5, line: 'JR湘南新宿ライン（10両編成）新宿方面からの宇都宮・高崎方面', note: '11番ホーム・中央改札（南）・南改札方面・新幹線南のりかえ口方面' },
+            '浦和-shonan-omiya-15': {
+                car: 8,
+                line: 'JR湘南新宿ライン（15両編成）大宮方面',
+                note: ''
+            },
+            '浦和-shonan-omiya-10': {
+                car: 5,
+                line: 'JR湘南新宿ライン（10両編成）大宮方面',
+                note: ''
+            },
+            '浦和-shonan-yokohama-15': {
+                car: 8,
+                line: 'JR湘南新宿ライン（15両編成）横浜方面',
+                note: ''
+            },
+            '浦和-shonan-yokohama-10': {
+                car: 5,
+                line: 'JR湘南新宿ライン（10両編成）横浜方面',
+                note: ''
+            },
+            '赤羽-shonan-south-15': {
+                car: 4,
+                line: 'JR湘南新宿ライン（15両編成）新宿方面',
+                note: ''
+            },
+            '赤羽-shonan-south-10': {
+                car: 2,
+                line: 'JR湘南新宿ライン（10両編成）新宿方面',
+                note: ''
+            },
+            '赤羽-shonan-north-15': {
+                car: 4,
+                line: 'JR湘南新宿ライン（15両編成）大宮方面',
+                note: ''
+            },
+            '赤羽-shonan-north-10': {
+                car: 1,
+                line: 'JR湘南新宿ライン（10両編成）大宮方面',
+                note: ''
+            },
+            '池袋-shonan-15': {
+                car: 9,
+                line: 'JR湘南新宿ライン（15両編成）',
+                note: ''
+            },
+            '池袋-shonan-10': {
+                car: 4,
+                line: 'JR湘南新宿ライン（10両編成）',
+                note: ''
+            },
+            '新宿-shonan-yokohama-koushu-15': {
+                car: 7,
+                line: 'JR湘南新宿ライン（15両編成）横浜方面',
+                note: '甲州街道改札・新南改札・ミライナタワー改札方面'
+            },
+            '新宿-shonan-yokohama-koushu-10': {
+                car: 2,
+                line: 'JR湘南新宿ライン（10両編成）横浜方面',
+                note: '甲州街道改札・新南改札・ミライナタワー改札方面'
+            },
+            '新宿-shonan-yokohama-south-15': {
+                car: 11,
+                line: 'JR湘南新宿ライン（15両編成）横浜方面',
+                note: '東南改札（東南口）・南改札（南口）・小田急線乗り換え専用口方面'
+            },
+            '新宿-shonan-yokohama-south-10': {
+                car: 6,
+                line: 'JR湘南新宿ライン（10両編成）横浜方面',
+                note: '東南改札（東南口）・南改札（南口）・小田急線乗り換え専用口方面'
+            },
+            '新宿-shonan-omiya-koushu-15': {
+                car: 8,
+                line: 'JR湘南新宿ライン（15両編成）大宮方面',
+                note: '甲州街道改札・新南改札・ミライナタワー改札方面'
+            },
+            '新宿-shonan-omiya-koushu-10': {
+                car: 5,
+                line: 'JR湘南新宿ライン（10両編成）大宮方面',
+                note: '甲州街道改札・新南改札・ミライナタワー改札方面'
+            },
+            '新宿-shonan-omiya-south-15': {
+                car: 13,
+                line: 'JR湘南新宿ライン（15両編成）大宮方面',
+                note: '東南改札（東南口）・南改札（南口）・小田急線乗り換え専用口方面'
+            },
+            '新宿-shonan-omiya-south-10': {
+                car: 10,
+                line: 'JR湘南新宿ライン（10両編成）大宮方面',
+                note: '東南改札（東南口）・南改札（南口）・小田急線乗り換え専用口方面'
+            },
+            '渋谷-shonan-minami-15': {
+                car: 8,
+                line: 'JR湘南新宿ライン（15両編成）',
+                note: '南改札行き'
+            },
+            '渋谷-shonan-minami-10': {
+                car: 6,
+                line: 'JR湘南新宿ライン（10両編成）',
+                note: '南改札行き'
+            },
+            '渋谷-shonan-chuo-15': {
+                car: 10,
+                line: 'JR湘南新宿ライン（15両編成）',
+                note: '中央改札行き'
+            },
+            '渋谷-shonan-chuo-10': {
+                car: 8,
+                line: 'JR湘南新宿ライン（10両編成）',
+                note: '中央改札行き'
+            },
+            '渋谷-shonan-hachiko-15': {
+                car: 13,
+                line: 'JR湘南新宿ライン（15両編成）',
+                note: 'ハチ公改札行き'
+            },
+            '渋谷-shonan-hachiko-10': {
+                car: 10,
+                line: 'JR湘南新宿ライン（10両編成）',
+                note: 'ハチ公改札行き'
+            },
+            '恵比寿-shonan-15': {
+                car: 12,
+                line: 'JR湘南新宿ライン（15両編成）',
+                note: ''
+            },
+            '恵比寿-shonan-10': {
+                car: 7,
+                line: 'JR湘南新宿ライン（10両編成）',
+                note: ''
+            },
+            '大崎-shonan-15': {
+                car: 12,
+                line: 'JR湘南新宿ライン（15両編成）',
+                note: ''
+            },
+            '大崎-shonan-10': {
+                car: 8,
+                line: 'JR湘南新宿ライン（10両編成）',
+                note: ''
+            },
+            '西大井-shonan-15': {
+                car: 7,
+                line: 'JR湘南新宿ライン（15両編成）',
+                note: ''
+            },
+            '西大井-shonan-10': {
+                car: 5,
+                line: 'JR湘南新宿ライン（10両編成）',
+                note: ''
+            },
+            '武蔵小杉-shonan-yokohama-15': {
+                car: 8,
+                line: 'JR湘南新宿ライン（15両編成）横浜方面',
+                note: ''
+            },
+            '武蔵小杉-shonan-omiya-15': {
+                car: 7,
+                line: 'JR湘南新宿ライン（15両編成）大宮方面',
+                note: ''
+            },
+            '武蔵小杉-shonan-omiya-10': {
+                car: 3,
+                line: 'JR湘南新宿ライン（10両編成）大宮方面',
+                note: ''
+            },
+            '新川崎-shonan-15': {
+                car: 7,
+                line: 'JR湘南新宿ライン（15両編成）',
+                note: ''
+            },
+            '新川崎-shonan-10': {
+                car: 3,
+                line: 'JR湘南新宿ライン（10両編成）',
+                note: ''
+            },
+            '横浜-shonan-minami': {
+                car: 3,
+                line: 'JR湘南新宿ライン',
+                note: '南改札（みなみ東口・みなみ西口）方面'
+            },
+            '横浜-shonan-chuo': {
+                car: 10,
+                line: 'JR湘南新宿ライン',
+                note: '中央北改札（東口・西口）・京急のりかえ口方面'
+            },
+            '保土ヶ谷-shonan': {
+                car: 4,
+                line: 'JR湘南新宿ライン',
+                note: ''
+            },
+            '東戸塚-shonan-15': {
+                car: 10,
+                line: 'JR湘南新宿ライン（15両編成）',
+                note: ''
+            },
+            '東戸塚-shonan-10': {
+                car: 6,
+                line: 'JR湘南新宿ライン（10両編成）',
+                note: ''
+            },
+            '戸塚-shonan-south-15': {
+                car: 8,
+                line: 'JR湘南新宿ライン（15両編成）小田原・逗子方面',
+                note: ''
+            },
+            '戸塚-shonan-south-10': {
+                car: 4,
+                line: 'JR湘南新宿ライン（10両編成）小田原・逗子方面',
+                note: ''
+            },
+            '戸塚-shonan-north-15': {
+                car: 9,
+                line: 'JR湘南新宿ライン（15両編成）新宿方面',
+                note: ''
+            },
+            '戸塚-shonan-north-10': {
+                car: 5,
+                line: 'JR湘南新宿ライン（10両編成）新宿方面',
+                note: ''
+            },
+            '大船-shonan-south-15': {
+                car: 10,
+                line: 'JR湘南新宿ライン（15両編成）逗子方面',
+                note: ''
+            },
+            '大船-shonan-north-15': {
+                car: 7,
+                line: 'JR湘南新宿ライン（15両編成）新宿方面',
+                note: ''
+            },
+            '大船-shonan-north-10': {
+                car: 6,
+                line: 'JR湘南新宿ライン（10両編成）新宿方面',
+                note: ''
+            },
+            '北鎌倉-shonan-15': {
+                car: 1,
+                line: 'JR湘南新宿ライン（15両編成）',
+                note: ''
+            },
+            '北鎌倉-shonan-10': {
+                car: 1,
+                line: 'JR湘南新宿ライン（10両編成）',
+                note: ''
+            },
+            '鎌倉-shonan-15': {
+                car: 8,
+                line: 'JR湘南新宿ライン（15両編成）',
+                note: ''
+            },
+            '鎌倉-shonan-10': {
+                car: 4,
+                line: 'JR湘南新宿ライン（10両編成）',
+                note: ''
+            },
+            '逗子-shonan-15': {
+                car: 5,
+                line: 'JR湘南新宿ライン（15両編成）',
+                note: ''
+            },
+            '逗子-shonan-10': {
+                car: 5,
+                line: 'JR湘南新宿ライン（10両編成）',
+                note: ''
+            },
+
+            // ===== JR総武快速線・横須賀線（千葉⇔東京⇔逗子）=====
+            // 15両・11両で号車・ドア位置共通（特記ある場合を除く）
+            // 4・5号車はグリーン車
+
+            // 千葉（3・4番線 内房線方面）
+            '千葉-soburapid-platform34': { car: 6, line: 'JR総武快速線 東京方面・千葉方面', note: '3・4番線ホーム（内房線方面）' },
+
+            // 千葉（5・6番線 外房線方面）
+            '千葉-soburapid-platform56': { car: 6, line: 'JR総武快速線 東京方面・千葉方面', note: '5・6番線ホーム（外房線方面）' },
+
+            // 千葉（7・8番線 総武本線方面）
+            '千葉-soburapid-platform78-chuo': { car: 6, line: 'JR総武快速線 東京方面・千葉方面', note: '7・8番線ホーム（中央改札方面）' },
+            '千葉-soburapid-platform78-kita-15': { car: '増4', line: 'JR総武快速線（15両編成） 東京方面・千葉方面', note: '7・8番線ホーム（西改札方面）' },
+            '千葉-soburapid-platform78-kita-11': { car: 1, line: 'JR総武快速線（11両編成） 東京方面・千葉方面', note: '7・8番線ホーム（西改札方面）' },
+
+            // 千葉（9・10番線 成田線方面）
+            '千葉-soburapid-platform910-chuo': { car: 6, line: 'JR総武快速線 東京方面・千葉方面', note: '9・10番線ホーム（中央改札方面）' },
+            '千葉-soburapid-platform910-kita-15': { car: '増4', line: 'JR総武快速線（15両編成） 東京方面・千葉方面', note: '9・10番線ホーム（西改札方面）' },
+            '千葉-soburapid-platform910-kita-11': { car: 1, line: 'JR総武快速線（11両編成） 東京方面・千葉方面', note: '9・10番線ホーム（西改札方面）' },
+
+            // 稲毛
+            '稲毛-soburapid': { car: 4, line: 'JR総武快速線 東京方面・千葉方面', note: '' },
+
+            // 津田沼
+            '津田沼-soburapid-up-no2': { car: 4, line: 'JR総武快速線 東京方面', note: '2番線ホーム' },
+            '津田沼-soburapid-up-no3': { car: 3, line: 'JR総武快速線 東京方面', note: '3番線ホーム' },
+            '津田沼-soburapid-down': { car: 4, line: 'JR総武快速線 千葉方面', note: '' },
+
+            // 船橋
+            '船橋-soburapid': { car: 7, line: 'JR総武快速線 東京方面・千葉方面', note: '' },
+
+            // 市川
+            '市川-soburapid': { car: 4, line: 'JR総武快速線 東京方面・千葉方面', note: '' },
+
+            // 新小岩
+            '新小岩-soburapid': { car: 6, line: 'JR総武快速線 東京方面・千葉方面', note: '' },
+
+            // 錦糸町
+            '錦糸町-soburapid': { car: 2, line: 'JR総武快速線 東京方面・千葉方面', note: '改札口（北口・南口）方面' },
+
+            // 馬喰町
+            '馬喰町-soburapid-15': { car: '増2', line: 'JR総武快速線（15両編成） 東京方面・千葉方面', note: '' },
+            '馬喰町-soburapid-11': { car: 1, line: 'JR総武快速線（11両編成） 東京方面・千葉方面', note: '' },
+
+            // 新日本橋
+            '新日本橋-soburapid': { car: 6, line: 'JR総武快速線 東京方面・千葉方面', note: '' },
+
+            // 東京（逗子方面 1・2番線）
+            '東京-soburapid-yokosuka-down': { car: 4, line: 'JR横須賀線・総武快速線 逗子・久里浜方面', note: '丸の内地下中央口・八重洲地下中央口方面' },
+            // 東京（千葉方面 3・4番線）
+            '東京-soburapid-down': { car: 4, line: 'JR総武快速線 千葉方面', note: '丸の内地下中央口・八重洲地下中央口方面' },
+            '東京-soburapid-up': { car: 4, line: 'JR総武快速線 東京方面', note: '丸の内地下中央口・八重洲地下中央口方面' },
+
+            // 新橋
+            '新橋-soburapid': { car: 2, line: 'JR横須賀線・総武快速線 東京方面・逗子方面', note: '' },
+
+            // 品川
+            '品川-soburapid-up': { car: 1, line: 'JR横須賀線・総武快速線 東京・千葉方面', note: '北改札口方面' },
+            '品川-soburapid-down-15': { car: '増3', line: 'JR横須賀線・総武快速線（15両編成） 逗子・久里浜方面', note: '北改札口方面' },
+            '品川-soburapid-down-11': { car: 3, line: 'JR横須賀線・総武快速線（11両編成） 逗子・久里浜方面', note: '北改札口方面' },
+
+            // 西大井
+            '西大井-soburapid-15': { car: 3, line: 'JR横須賀線・総武快速線（15両編成） 東京方面・逗子方面', note: '' },
+            '西大井-soburapid-11': { car: 5, line: 'JR横須賀線・総武快速線（11両編成） 東京方面・逗子方面', note: '' },
+
+            // 武蔵小杉
+            '武蔵小杉-soburapid-down-15': { car: 4, line: 'JR横須賀線・総武快速線（15両編成） 逗子・久里浜方面', note: '' },
+            '武蔵小杉-soburapid-down-11': { car: 8, line: 'JR横須賀線・総武快速線（11両編成） 逗子・久里浜方面', note: '' },
+            '武蔵小杉-soburapid-up': { car: 3, line: 'JR横須賀線・総武快速線 東京・千葉方面', note: '' },
+
+            // 新川崎
+            '新川崎-soburapid': { car: 3, line: 'JR横須賀線・総武快速線 東京方面・逗子方面', note: '' },
+
+            // 横浜（逗子方面 9番線）
+            '横浜-soburapid-down-minami-15': { car: '増3', line: 'JR横須賀線・総武快速線（15両編成） 逗子・久里浜方面', note: '南改札・中央南改札方面' },
+            '横浜-soburapid-down-minami-11': { car: 3, line: 'JR横須賀線・総武快速線（11両編成） 逗子・久里浜方面', note: '南改札・中央南改札方面' },
+            '横浜-soburapid-down-chuo-15': { car: 6, line: 'JR横須賀線・総武快速線（15両編成） 逗子・久里浜方面', note: '中央北改札・京急のりかえ口方面' },
+            '横浜-soburapid-down-chuo-11': { car: 10, line: 'JR横須賀線・総武快速線（11両編成） 逗子・久里浜方面', note: '中央北改札・京急のりかえ口方面' },
+            // 横浜（東京方面 10番線）
+            '横浜-soburapid-up-chuo-15': { car: 6, line: 'JR横須賀線・総武快速線（15両編成） 東京・千葉方面', note: '中央北改札・京急のりかえ口方面' },
+            '横浜-soburapid-up-chuo-11': { car: 10, line: 'JR横須賀線・総武快速線（11両編成） 東京・千葉方面', note: '中央北改札・京急のりかえ口方面' },
+            '横浜-soburapid-up-minami-15': { car: '増3', line: 'JR横須賀線・総武快速線（15両編成） 東京・千葉方面', note: '南改札・中央南改札方面' },
+            '横浜-soburapid-up-minami-11': { car: 3, line: 'JR横須賀線・総武快速線（11両編成） 東京・千葉方面', note: '南改札・中央南改札方面' },
+
+            // 保土ヶ谷
+            '保土ヶ谷-soburapid-15': { car: '増4', line: 'JR横須賀線・総武快速線（15両編成） 東京方面・逗子方面', note: '' },
+            '保土ヶ谷-soburapid-11': { car: 4, line: 'JR横須賀線・総武快速線（11両編成） 東京方面・逗子方面', note: '' },
+
+            // 東戸塚
+            '東戸塚-soburapid': { car: 6, line: 'JR横須賀線・総武快速線 東京方面・逗子方面', note: '' },
+
+            // 戸塚
+            '戸塚-soburapid-down': { car: 4, line: 'JR横須賀線・総武快速線 逗子方面', note: '' },
+            '戸塚-soburapid-up': { car: 5, line: 'JR横須賀線・総武快速線 東京・千葉方面', note: '' },
+
+            // 大船（逗子方面）
+            '大船-soburapid-down-15': { car: 6, line: 'JR横須賀線・総武快速線（15両編成） 逗子方面', note: '南改札口（東口・西口）方面' },
+            '大船-soburapid-down-11': { car: 10, line: 'JR横須賀線・総武快速線（11両編成） 逗子方面', note: '南改札口（東口・西口）方面' },
+            // 大船（東京方面）
+            '大船-soburapid-up-15': { car: 3, line: 'JR横須賀線・総武快速線（15両編成） 東京・千葉方面', note: '北改札口（笠間口）方面' },
+            '大船-soburapid-up-11': { car: 7, line: 'JR横須賀線・総武快速線（11両編成） 東京・千葉方面', note: '北改札口（笠間口）方面' },
+
+            // 北鎌倉
+            '北鎌倉-soburapid-15': { car: '増1', line: 'JR横須賀線・総武快速線（15両編成） 東京方面・逗子方面', note: '東口改札・西口方面' },
+            '北鎌倉-soburapid-11': { car: 1, line: 'JR横須賀線・総武快速線（11両編成） 東京方面・逗子方面', note: '東口改札・西口方面' },
+
+            // 鎌倉
+            '鎌倉-soburapid': { car: 4, line: 'JR横須賀線・総武快速線 東京方面・逗子方面', note: '東口・西口・江ノ電連絡口方面' },
+
+            // 逗子（当駅止まり 2・3番線）
+            '逗子-soburapid-down-15': { car: 1, line: 'JR横須賀線・総武快速線（15両編成） 当駅止まり', note: '' },
+            '逗子-soburapid-down-11': { car: 5, line: 'JR横須賀線・総武快速線（11両編成） 当駅止まり', note: '' },
+            // 逗子（東京方面始発 1番線）
+            '逗子-soburapid-up-15': { car: 7, line: 'JR横須賀線・総武快速線（15両編成） 東京・千葉方面始発', note: '' },
+            '逗子-soburapid-up-11': { car: 3, line: 'JR横須賀線・総武快速線（11両編成） 東京・千葉方面始発', note: '' },
+
+        };
+
+        // 駅リストを生成（検索用）
+        const stationList = [];
+        // 路線の補足説明マップ
+        const lineDescriptions = {
+            'JR高崎線': { 
+                display: 'JR高崎線', 
+                sub: '上野東京ライン直通（東京・品川・東海道線方面）' 
+            },
+            'JR宇都宮線': { 
+                display: 'JR宇都宮線', 
+                sub: '上野東京ライン直通（東京・品川・東海道線方面）' 
+            },
+            'JR常磐線': { 
+                display: 'JR常磐線', 
+                sub: '上野東京ライン直通（東京・品川方面あり）' 
+            },
+            'JR東海道線': { 
+                display: 'JR東海道線', 
+                sub: '上野東京ライン直通（上野・宇都宮線・高崎線方面）' 
+            },
+            'JR湘南新宿ライン': { 
+                display: 'JR湘南新宿ライン', 
+                sub: '高崎線・宇都宮線と東海道線・横須賀線を直通' 
+            },
+            'JR横浜線': { 
+                display: 'JR横浜線', 
+                sub: '東神奈川で根岸線・京浜東北線に直通' 
+            },
+            'JR根岸線': { 
+                display: 'JR根岸線', 
+                sub: '京浜東北線と直通運転（大船〜横浜〜東神奈川）' 
+            },
+            'JR横浜線・根岸線': { 
+                display: 'JR横浜線・根岸線', 
+                sub: '横浜線と根岸線の直通運転区間' 
+            },
+            'JR横須賀線': { 
+                display: 'JR横須賀線', 
+                sub: '総武快速線と直通（東京地下ホーム経由・千葉方面）' 
+            },
+            'JR総武快速線': { 
+                display: 'JR総武快速線', 
+                sub: '横須賀線と直通（東京地下ホーム経由・逗子・久里浜方面）' 
+            },
+        };
+
+        const stationLineMap = {}; // 駅ごとの路線をグループ化
+        
+        Object.keys(stationData).forEach(key => {
+            const data = stationData[key];
+            const stationName = key.split('-')[0];
+            const lineType = key.split('-')[1]; // yamanote, saikyo, etc.
+            
+            // 基本路線名を抽出（改札・方面情報を除去）
+            let baseLine = data.line.split('（')[0]; // 「JR埼京線（新南改札方面）」→「JR埼京線」
+            
+            // 方面情報をスペース区切りで除去（例：「JR根岸線 大宮方面」→「JR根岸線」）
+            // ただし、番線情報は保持する
+            const directions = ['横浜方面', '大宮方面', '新宿方面', '逗子方面', '東京方面', '高崎方面', 
+                              '内回り', '外回り', '三鷹方面', '千葉方面', '大船方面', '上野方面', 
+                              '宇都宮方面', '東神奈川方面', '八王子方面', '熱海方面',
+                              '東京方面・千葉方面', '逗子・久里浜方面', '東京・千葉方面', '当駅止まり',
+                              '東京方面・逗子方面', '東京・千葉方面始発'];
+            directions.forEach(dir => {
+                if (baseLine.endsWith(' ' + dir)) {
+                    baseLine = baseLine.replace(' ' + dir, '');
+                }
+            });
+            
+            if (!stationLineMap[stationName]) {
+                stationLineMap[stationName] = {};
+            }
+            
+            if (!stationLineMap[stationName][baseLine]) {
+                stationLineMap[stationName][baseLine] = [];
+            }
+            
+            stationLineMap[stationName][baseLine].push(key);
+        });
+        
+        // 駅と路線の組み合わせリストを作成
+        Object.keys(stationLineMap).forEach(stationName => {
+            Object.keys(stationLineMap[stationName]).forEach(lineName => {
+                stationList.push({
+                    station: stationName,
+                    line: lineName,
+                    keys: stationLineMap[stationName][lineName]
+                });
+            });
+        });
+
+        // DOM要素
+        const destinationInput = document.getElementById('destination-input');
+        const destinationDropdown = document.getElementById('destination-dropdown');
+        const clearButton = document.getElementById('clear-button');
+        const searchButton = document.getElementById('search-button');
+        const errorMessage = document.getElementById('error-message');
+        const result = document.getElementById('result');
+        const resultCar = document.getElementById('result-car');
+        const resultNote = document.getElementById('result-note');
+
+        let selectedStation = null;
+
+        // クリアボタンの表示/非表示
+        function updateClearButton() {
+            if (destinationInput.value.trim().length > 0) {
+                clearButton.classList.add('show');
+            } else {
+                clearButton.classList.remove('show');
+            }
+        }
+
+        // クリアボタンのクリックイベント
+        clearButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            destinationInput.value = '';
+            selectedStation = null;
+            destinationDropdown.classList.remove('show');
+            errorMessage.classList.remove('show');
+            result.classList.remove('show');
+            clearButton.classList.remove('show');
+            destinationInput.focus();
+        });
+
+        // 検索フィルタリング（駅名完全一致のみ）
+        function filterStations(query) {
+            if (!query) return [];
+            
+            return stationList.filter(item => 
+                item.station === query || item.station.includes(query)
+            );
+        }
+
+        // ドロップダウン表示
+        function showDropdown(stations) {
+            if (stations.length === 0) {
+                destinationDropdown.classList.remove('show');
+                return;
+            }
+
+            destinationDropdown.innerHTML = stations.map((item, index) => {
+                const desc = lineDescriptions[item.line];
+                return `
+                <div class="dropdown-item" data-index="${index}">
+                    <div class="station-name">${item.station}</div>
+                    <div class="line-name">${item.line}</div>
+                    ${desc ? `<div class="line-sub" style="font-size: 11px; color: #999; margin-top: 2px;">${desc.sub}</div>` : ''}
+                </div>
+            `}).join('');
+
+            destinationDropdown.classList.add('show');
+
+            // クリックイベント
+            document.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    const station = stations[index];
+                    selectStation(station);
+                });
+            });
+        }
+
+        // 駅選択
+        function selectStation(station) {
+            selectedStation = station;
+            destinationInput.value = `${station.station}（${station.line}）`;
+            destinationDropdown.classList.remove('show');
+            errorMessage.classList.remove('show');
+        }
+
+        // 入力イベント
+        destinationInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            selectedStation = null;
+            updateClearButton();
+            
+            if (query.length === 0) {
+                destinationDropdown.classList.remove('show');
+                return;
+            }
+
+            const filtered = filterStations(query);
+            showDropdown(filtered);
+        });
+
+        // フォーカスアウト時にドロップダウンを閉じる
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.input-wrapper')) {
+                destinationDropdown.classList.remove('show');
+            }
+        });
+
+        // 検索ボタン
+        searchButton.addEventListener('click', function() {
+            if (!selectedStation) {
+                errorMessage.textContent = '降りる駅を選択してください';
+                errorMessage.classList.add('show');
+                result.classList.remove('show');
+                return;
+            }
+
+            // 複数の号車データを取得
+            const carOptions = selectedStation.keys.map(key => {
+                const data = stationData[key];
+                const fullLine = data.line; // line全体を取得
+                
+                // labelを正しく抽出
+                let label = '';
+                
+                // JR埼京線（新木場・海老名・大崎方面）東南改札・南改札方面
+                // から（）を除いた部分を取得
+                if (fullLine.includes('（')) {
+                    // 最初の（以降の部分
+                    const afterParen = fullLine.substring(fullLine.indexOf('（') + 1);
+                    // 路線名部分を除去
+                    label = afterParen;
+                } else {
+                    label = '';
+                }
+                
+                // 編成情報を抽出
+                let formationInfo = '';
+                if (fullLine.includes('15両編成')) {
+                    formationInfo = '15両編成';
+                } else if (fullLine.includes('10両編成')) {
+                    formationInfo = '10両編成';
+                } else if (fullLine.includes('12両編成')) {
+                    formationInfo = '12両編成';
+                } else if (fullLine.includes('8両編成')) {
+                    formationInfo = '8両編成';
+                }
+                
+                // 番線情報を抽出（大宮駅などの複雑なケース用）
+                let platformInfo = '';
+                
+                try {
+                    // noteフィールドから番線情報を取得（優先）
+                    if (data.note && data.note.includes('番ホーム')) {
+                        // 7・8番ホーム または 10番ホーム
+                        if (data.note.match(/\d+[・･]\d+番ホーム/)) {
+                            platformInfo = data.note.match(/\d+[・･]\d+番ホーム/)[0];
+                        } else if (data.note.match(/\d+番ホーム/)) {
+                            platformInfo = data.note.match(/\d+番ホーム/)[0];
+                        }
+                    }
+                    
+                    // lineフィールドからも取得（フォールバック）
+                    if (!platformInfo) {
+                        if (fullLine.includes('番線')) {
+                            if (fullLine.match(/\d+番線（[^）]+）/)) {
+                                platformInfo = fullLine.match(/\d+番線（[^）]+）/)[0];
+                            } else if (fullLine.match(/\d+[・･]\d+番線/)) {
+                                platformInfo = fullLine.match(/\d+[・･]\d+番線/)[0];
+                            } else if (fullLine.match(/\d+番線/)) {
+                                platformInfo = fullLine.match(/\d+番線/)[0];
+                            }
+                        } else if (fullLine.includes('番ホーム')) {
+                            if (fullLine.match(/\d+[・･]\d+番ホーム/)) {
+                                platformInfo = fullLine.match(/\d+[・･]\d+番ホーム/)[0];
+                            } else if (fullLine.match(/\d+番ホーム/)) {
+                                platformInfo = fullLine.match(/\d+番ホーム/)[0];
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // エラーが発生しても続行
+                    console.error('Platform info extraction error:', e);
+                }
+                
+                // 方面グループを判定（fullLineから判定）
+                let directionGroup = '';
+                
+                // 番線情報がある場合は、番線を優先してグループ化
+                if (platformInfo) {
+                    directionGroup = platformInfo;
+                }
+                // 山手線：内回り・外回り
+                else if (fullLine.includes('内回り')) {
+                    directionGroup = '内回り';
+                } else if (fullLine.includes('外回り')) {
+                    directionGroup = '外回り';
+                }
+                // 中央線：東京方面・高尾方面
+                else if (fullLine.includes('東京方面')) {
+                    directionGroup = '東京方面';
+                } else if (fullLine.includes('高尾方面')) {
+                    directionGroup = '高尾方面';
+                }
+                // 中央・総武線：三鷹方面・千葉方面
+                else if (fullLine.includes('三鷹方面')) {
+                    directionGroup = '三鷹方面';
+                } else if (fullLine.includes('千葉方面')) {
+                    directionGroup = '千葉方面';
+                }
+                // 京浜東北線：大船方面・大宮方面
+                else if (fullLine.includes('大船方面')) {
+                    directionGroup = '大船方面';
+                } else if (fullLine.includes('大宮方面') && !fullLine.includes('から')) {
+                    directionGroup = '大宮方面';
+                }
+                // 埼京線：武蔵浦和・大宮方面 vs 新木場・海老名・大崎方面
+                else if (fullLine.includes('新木場・海老名・大崎方面') || fullLine.includes('新木場方面')) {
+                    directionGroup = '新木場・海老名・大崎方面';
+                } else if (fullLine.includes('武蔵浦和・大宮方面')) {
+                    directionGroup = '武蔵浦和・大宮方面';
+                }
+                // 湘南新宿ライン
+                else if (fullLine.includes('大宮方面から')) {
+                    directionGroup = '大宮方面から';
+                } else if (fullLine.includes('横浜方面から')) {
+                    directionGroup = '横浜方面から';
+                }
+                // 逗子方面・小田原方面
+                else if (fullLine.includes('逗子方面') || fullLine.includes('小田原・逗子方面')) {
+                    directionGroup = '逗子方面';
+                } else if (fullLine.includes('新宿方面')) {
+                    directionGroup = '新宿方面';
+                }
+                // その他
+                else {
+                    directionGroup = 'その他';
+                }
+                
+                return {
+                    car: data.car,
+                    label: label,
+                    note: data.note,
+                    directionGroup: directionGroup,
+                    formationInfo: formationInfo,
+                    rawKey: key
+                };
+            });
+            
+            // 結果表示
+            if (carOptions.length === 1) {
+                // 1つの場合はシンプル表示
+                resultCar.innerHTML = `<div class="car-number">${carOptions[0].car}号車</div>`;
+                resultNote.textContent = carOptions[0].note;
+            } else {
+                // 新しいレイアウト：編成情報を括弧で表示
+                
+                // まず、方面・改札・出口情報と編成でユニークなエントリを作成
+                const uniqueEntries = new Map();
+                
+                carOptions.forEach(opt => {
+                    // 改札情報を抽出（番線情報・当駅止まり情報は除外）
+                    let exitInfo = '';
+                    if (opt.note && !opt.note.includes('エレベーター付近') && !opt.note.includes('グリーン車')) {
+                        // 番線情報が含まれている場合は除外
+                        if (opt.note.match(/\d+番[・･]\d+番ホーム|\d+[・･]\d+番ホーム|\d+番ホーム/)) {
+                            // 番線情報以外の部分を取得（3つのパターンに対応）
+                            exitInfo = opt.note
+                                .replace(/\d+番[・･]\d+番ホーム/, '') // 3番・4番ホーム
+                                .replace(/\d+[・･]\d+番ホーム/, '')   // 7・8番ホーム
+                                .replace(/\d+番ホーム/, '')          // 10番ホーム
+                                .trim();
+                            // ・で始まる場合は削除
+                            if (exitInfo.startsWith('・')) exitInfo = exitInfo.substring(1);
+                        } else {
+                            exitInfo = opt.note;
+                        }
+                    } else {
+                        exitInfo = (opt.label.replace(/[（）]/g, '').split(/(?<=方面)/)[1] || '').trim();
+                    }
+                    
+                    // 「から当駅止まり」をexitInfoから除外
+                    if (exitInfo.includes('から当駅止まり')) {
+                        exitInfo = '';
+                    }
+                    
+                    // 方面情報をlineフィールドから直接抽出
+                    let directionInfo = '';
+                    const fullLine = stationData[opt.rawKey].line;
+                    const noteField = stationData[opt.rawKey].note;
+                    
+                    // noteフィールドから番線情報を優先的に抽出
+                    if (noteField && noteField.match(/\d+番[・･]\d+番ホーム|\d+[・･]\d+番ホーム|\d+番ホーム/)) {
+                        // 「2番ホーム（大宮方面から当駅止まり）」のようなパターンに対応
+                        const platformWithParenMatch = noteField.match(/(\d+番[・･]?\d*番?ホーム)（([^）]+)）/);
+                        if (platformWithParenMatch) {
+                            // 括弧内の情報も含める
+                            directionInfo = platformWithParenMatch[1] + '（' + platformWithParenMatch[2] + '）';
+                        } else {
+                            // 括弧がない場合は番線情報のみ
+                            const match = noteField.match(/\d+番[・･]\d+番ホーム|\d+[・･]\d+番ホーム|\d+番ホーム/);
+                            if (match) {
+                                directionInfo = match[0];
+                                // lineフィールドから方面情報も追加
+                                // 複雑なパターンを優先チェック
+                                if (fullLine.match(/([^（）]+からの[^（）]+方面)/)) {
+                                    const complexMatch = fullLine.match(/([^（）]+からの[^（）]+方面)/);
+                                    if (complexMatch) {
+                                        directionInfo += '（' + complexMatch[1] + '）';
+                                    }
+                                } else if (fullLine.includes('上野・新宿方面')) {
+                                    directionInfo += '（上野・新宿方面）';
+                                } else if (fullLine.includes('上野方面')) {
+                                    directionInfo += '（上野方面）';
+                                } else if (fullLine.includes('高崎方面')) {
+                                    directionInfo += '（高崎方面）';
+                                } else if (fullLine.includes('宇都宮方面')) {
+                                    directionInfo += '（宇都宮方面）';
+                                } else if (fullLine.includes('大宮方面')) {
+                                    directionInfo += '（大宮方面）';
+                                }
+                            }
+                        }
+                    }
+                    // lineフィールドから番線情報を抽出（フォールバック）
+                    else if (fullLine.includes('番線')) {
+                        const platformMatch = fullLine.match(/(\d+番線（[^）]+）|\d+[・･]\d+番線|\d+番線)/);
+                        if (platformMatch) {
+                            directionInfo = platformMatch[1];
+                        }
+                    }
+                    // 番線情報がない場合は方面情報を抽出
+                    // まず複雑なパターン（「〜からの〜方面」）をチェック
+                    else if (fullLine.match(/([^（）]+からの[^（）]+方面)/)) {
+                        const complexMatch = fullLine.match(/([^（）]+からの[^（）]+方面)/);
+                        if (complexMatch) {
+                            directionInfo = complexMatch[1];
+                        }
+                    }
+                    // 「〜から当駅止まり」を優先でチェック
+                    else if (fullLine.includes('から当駅止まり')) {
+                        // 「大宮方面から当駅止まり」などから「大宮方面から当駅止まり」のみを抽出
+                        const match = fullLine.match(/([^（）]+方面)から当駅止まり/);
+                        if (match) {
+                            // 路線名を除去（最後の方面情報のみ取得）
+                            const directionPart = match[1].split(/線/).pop().trim();
+                            directionInfo = directionPart + 'から当駅止まり';
+                        }
+                    }
+                    else if (fullLine.includes('横浜方面')) {
+                        directionInfo = '横浜方面';
+                    } else if (fullLine.includes('上野・新宿方面')) {
+                        directionInfo = '上野・新宿方面';
+                    } else if (fullLine.includes('上野方面')) {
+                        directionInfo = '上野方面';
+                    } else if (fullLine.includes('熱海方面')) {
+                        directionInfo = '熱海方面';
+                    } else if (fullLine.includes('大宮方面')) {
+                        directionInfo = '大宮方面';
+                    } else if (fullLine.includes('新宿方面')) {
+                        directionInfo = '新宿方面';
+                    } else if (fullLine.includes('逗子・久里浜方面')) {
+                        directionInfo = '逗子・久里浜方面';
+                    } else if (fullLine.includes('逗子方面')) {
+                        directionInfo = '逗子方面';
+                    } else if (fullLine.includes('東京・千葉方面始発')) {
+                        directionInfo = '東京・千葉方面始発';
+                    } else if (fullLine.includes('東京・千葉方面')) {
+                        directionInfo = '東京・千葉方面';
+                    } else if (fullLine.includes('東京方面・千葉方面')) {
+                        directionInfo = '東京方面・千葉方面';
+                    } else if (fullLine.includes('東京方面・逗子方面')) {
+                        directionInfo = '東京方面・逗子方面';
+                    } else if (fullLine.includes('当駅止まり')) {
+                        directionInfo = '当駅止まり';
+                    } else if (fullLine.includes('東京方面')) {
+                        directionInfo = '東京方面';
+                    } else if (fullLine.includes('高崎方面')) {
+                        directionInfo = '高崎方面';
+                    } else if (fullLine.includes('高尾方面')) {
+                        directionInfo = '高尾方面';
+                    } else if (fullLine.includes('内回り')) {
+                        directionInfo = '内回り';
+                    } else if (fullLine.includes('外回り')) {
+                        directionInfo = '外回り';
+                    } else if (fullLine.includes('三鷹方面')) {
+                        directionInfo = '三鷹方面';
+                    } else if (fullLine.includes('千葉方面')) {
+                        directionInfo = '千葉方面';
+                    } else if (fullLine.includes('大船方面')) {
+                        directionInfo = '大船方面';
+                    } else if (fullLine.includes('東神奈川方面')) {
+                        directionInfo = '東神奈川方面';
+                    } else if (fullLine.includes('八王子方面')) {
+                        directionInfo = '八王子方面';
+                    }
+                    
+                    // 上記のいずれにもマッチしない場合、汎用的に「〜方面」を抽出
+                    if (!directionInfo && fullLine.includes('方面')) {
+                        // 括弧内の方面情報を抽出（例：「（新木場・海老名・大崎方面）」）
+                        const directionMatch = fullLine.match(/（([^）]*方面[^）]*)）/);
+                        if (directionMatch) {
+                            directionInfo = directionMatch[1];
+                        }
+                    }
+                    
+                    // グリーン車路線かどうか判定
+                    const greenCarLines = ['湘南新宿ライン', '東海道線', '横須賀線', '総武快速線', '宇都宮線', '高崎線', '常磐線'];
+                    const isGreenCarLine = greenCarLines.some(line => fullLine.includes(line));
+                    
+                    // キーを作成（方面+改札情報+編成情報+号車番号）
+                    const key = `${directionInfo}-${exitInfo}-${opt.formationInfo || 'default'}-${opt.car}`;
+                    
+                    if (!uniqueEntries.has(key)) {
+                        uniqueEntries.set(key, {
+                            car: opt.car,
+                            directionInfo: directionInfo,
+                            exitInfo: exitInfo,
+                            formationInfo: opt.formationInfo,
+                            isGreenCarLine: isGreenCarLine
+                        });
+                    }
+                });
+                
+                // 方面+改札情報ごとにグループ化（異なる編成の号車をまとめる）
+                const displayGroups = new Map();
+                uniqueEntries.forEach((entry, key) => {
+                    const groupKey = `${entry.directionInfo}-${entry.exitInfo}`;
+                    if (!displayGroups.has(groupKey)) {
+                        displayGroups.set(groupKey, {
+                            directionInfo: entry.directionInfo,
+                            exitInfo: entry.exitInfo,
+                            entries: []
+                        });
+                    }
+                    displayGroups.get(groupKey).entries.push(entry);
+                });
+                
+                // 方面によって号車が同じ場合は方面情報を削除してマージ
+                const mergedGroups = new Map();
+                displayGroups.forEach((group, key) => {
+                    const { directionInfo, exitInfo, entries } = group;
+                    
+                    // 同じ改札で異なる方面のグループを探す
+                    let shouldMerge = false;
+                    const carNumbers = entries.map(e => e.car).sort().join('-');
+                    
+                    // 同じ改札情報を持つ他のグループをチェック
+                    for (const [otherKey, otherGroup] of displayGroups.entries()) {
+                        if (otherKey !== key && 
+                            otherGroup.exitInfo === exitInfo && 
+                            otherGroup.directionInfo !== directionInfo) {
+                            const otherCarNumbers = otherGroup.entries.map(e => e.car).sort().join('-');
+                            if (carNumbers === otherCarNumbers) {
+                                shouldMerge = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // マージする場合は方面情報を削除
+                    const mergeKey = shouldMerge ? exitInfo : `${directionInfo}-${exitInfo}`;
+                    
+                    if (!mergedGroups.has(mergeKey)) {
+                        mergedGroups.set(mergeKey, {
+                            directionInfo: shouldMerge ? '' : directionInfo,
+                            exitInfo: exitInfo,
+                            entries: entries
+                        });
+                    }
+                });
+                
+                // mergedGroupsをdisplayGroupsに置き換え
+                displayGroups.clear();
+                mergedGroups.forEach((group, key) => {
+                    displayGroups.set(key, group);
+                });
+                
+                // 全編成種類を確認
+                const allFormationsSet = [...new Set(carOptions.map(opt => opt.formationInfo).filter(f => f))];
+                const hasMultipleFormations = allFormationsSet.length > 1;
+                
+                // 注釈文を生成
+                let noteText = '';
+                if (hasMultipleFormations && allFormationsSet.length === 2) {
+                    allFormationsSet.sort((a, b) => {
+                        const numA = parseInt(a.match(/\d+/)[0]);
+                        const numB = parseInt(b.match(/\d+/)[0]);
+                        return numB - numA;
+                    });
+                    const smallerFormation = allFormationsSet[1];
+                    noteText = `※（ ）内は、${smallerFormation}時の号車です。`;
+                }
+                
+                // HTML生成
+                let html = '';
+                
+                // 注釈を最初に表示
+                if (noteText) {
+                    html += `<div class="formation-note" style="font-size: 14px; color: #666; margin-bottom: 20px; padding: 12px; background: #f8f9ff; border-radius: 8px;">${noteText}</div>`;
+                }
+                
+                // 方面でグループをソート
+                const sortedGroups = Array.from(displayGroups.values()).sort((a, b) => {
+                    // 方面の順序を定義（番線を優先）
+                    const directionOrder = [
+                        '3番線・4番線',
+                        '6番線',
+                        '7番線',
+                        '11番線（大宮方面）',
+                        '横浜方面',
+                        '大宮方面',
+                        '新宿方面',
+                        '逗子方面',
+                        '東京方面',
+                        '高尾方面'
+                    ];
+                    const indexA = directionOrder.indexOf(a.directionInfo);
+                    const indexB = directionOrder.indexOf(b.directionInfo);
+                    
+                    // 同じ方面の場合は、改札情報でソート
+                    if (a.directionInfo === b.directionInfo) {
+                        return a.exitInfo.localeCompare(b.exitInfo, 'ja');
+                    }
+                    
+                    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                    if (indexA !== -1) return -1;
+                    if (indexB !== -1) return 1;
+                    return 0;
+                });
+                
+                let currentDirection = '';
+                
+                // 各グループを表示
+                sortedGroups.forEach(group => {
+                    const { directionInfo, exitInfo, entries } = group;
+                    
+                    // 方面が変わったら見出しと区切り線を表示
+                    if (directionInfo && directionInfo !== currentDirection) {
+                        if (currentDirection) {
+                            html += '<div class="group-divider" style="height: 3px; background: #667eea; margin: 25px 0; border-radius: 2px;"></div>';
+                        }
+                        
+                        // 番線と方面を改行して表示
+                        let displayDirection = directionInfo;
+                        // 「3・4番ホーム（宇都宮方面からの上野・新宿方面）」のようなパターンを検出
+                        const platformDirectionMatch = directionInfo.match(/^(.+番(?:ホーム|線))（(.+)）$/);
+                        if (platformDirectionMatch) {
+                            // 番線と方面を2行に分ける
+                            displayDirection = `${platformDirectionMatch[1]}<br><span style="font-size: 16px;">(${platformDirectionMatch[2]})</span>`;
+                        }
+                        
+                        html += `<div class="direction-header" style="font-size: 18px; font-weight: 600; color: #667eea; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #667eea; text-align: center;">${displayDirection}</div>`;
+                        currentDirection = directionInfo;
+                    }
+                    
+                    // 編成でソート（大きい順）
+                    entries.sort((a, b) => {
+                        if (!a.formationInfo && !b.formationInfo) return 0;
+                        if (!a.formationInfo) return 1;
+                        if (!b.formationInfo) return -1;
+                        const numA = parseInt(a.formationInfo.match(/\d+/)[0]);
+                        const numB = parseInt(b.formationInfo.match(/\d+/)[0]);
+                        return numB - numA;
+                    });
+                    
+                    // 基準号車（最初の項目、通常は15両編成）
+                    const mainCar = entries[0].car;
+                    const isGreenCarLine = entries[0].isGreenCarLine;
+                    const isMainGreenCar = (mainCar === 4 || mainCar === 5) && isGreenCarLine;
+                    
+                    let carDisplay = `${mainCar}号車`;
+                    if (isMainGreenCar) {
+                        carDisplay += ` <span style="font-size: 14px; color: #9ACD32;">※グリーン車</span>`;
+                    }
+                    
+                    // 括弧内の号車（2番目以降の項目、通常は10両編成）
+                    if (entries.length > 1 && hasMultipleFormations) {
+                        const alternateEntries = entries.slice(1).filter(item => String(item.car) !== String(mainCar));
+                        if (alternateEntries.length > 0) {
+                            const alternateCars = alternateEntries.map(item => {
+                                const altCar = item.car;
+                                const isAltGreenCar = (altCar === 4 || altCar === 5) && isGreenCarLine;
+                                return isAltGreenCar ? `${altCar}号車 <span style="font-size: 14px; color: #9ACD32;">※グリーン車</span>` : `${altCar}号車`;
+                            }).join('、');
+                            carDisplay += `<br><span style="font-size: 24px; color: #999;">(${alternateCars})</span>`;
+                        }
+                    }
+                    
+                    html += `
+                        <div class="car-option">
+                            <div class="car-number" style="font-size: 36px; font-weight: 700;">${carDisplay}</div>
+                            ${exitInfo ? `<div class="car-label" style="font-size: 15px;">${exitInfo}</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                resultCar.innerHTML = html;
+                resultNote.textContent = '目的の改札・方面に応じて選んでください';
+            }
+            
+            result.classList.add('show');
+            errorMessage.classList.remove('show');
+        });
+
+        // Enterキーで検索
+        destinationInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchButton.click();
+            }
+        });
+    </script>
+</body>
+</html>
