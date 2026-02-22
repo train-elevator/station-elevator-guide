@@ -3189,14 +3189,16 @@
                             displayDirection = `${platformDirectionMatch[1]}<br><span style="font-size: 16px;">(${platformDirectionMatch[2]})</span>`;
                         }
                         
-                        // 「立川方面からの列車」「奥多摩方面からの列車」は編成情報付きヘッダー
+                        // 「立川方面からの列車」「奥多摩方面からの列車」は編成情報付きヘッダー（2行表示）
                         if (directionInfo === '立川方面からの列車') {
-                            const formations = group.entries.map(e => e.formationInfo).filter(f => f);
-                            const formationText = formations.length > 0 ? `（${formations.join('・')}）` : '';
+                            const formations = [...new Set(group.entries.map(e => e.formationInfo).filter(f => f))];
+                            formations.sort((a, b) => parseInt(b.match(/\d+/)[0]) - parseInt(a.match(/\d+/)[0]));
+                            const formationText = formations.length > 0 ? `<br><span style="font-size:15px;">（${formations.join('・')}）</span>` : '';
                             displayDirection = `立川方面からの列車${formationText}`;
                         } else if (directionInfo === '奥多摩方面からの列車') {
-                            const formations = group.entries.map(e => e.formationInfo).filter(f => f);
-                            const formationText = formations.length > 0 ? `（${formations.join('・')}）` : '';
+                            const formations = [...new Set(group.entries.map(e => e.formationInfo).filter(f => f))];
+                            formations.sort((a, b) => parseInt(b.match(/\d+/)[0]) - parseInt(a.match(/\d+/)[0]));
+                            const formationText = formations.length > 0 ? `<br><span style="font-size:15px;">（${formations.join('・')}）</span>` : '';
                             displayDirection = `奥多摩方面からの列車${formationText}`;
                         }
                         
