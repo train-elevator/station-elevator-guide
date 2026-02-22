@@ -3205,8 +3205,8 @@
                         
                         html += `<div class="direction-header" style="font-size: 18px; font-weight: 600; color: #667eea; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #667eea; text-align: center;">${displayDirection}</div>`;
                         
-                        // グループ内に複数編成があれば注釈を表示
-                        {
+                        // グループ内に複数編成があれば注釈を表示（グローバル注釈がない場合のみ）
+                        if (!noteText) {
                             const groupFormations = [...new Set(group.entries.map(e => e.formationInfo).filter(f => f))];
                             if (groupFormations.length >= 2) {
                                 groupFormations.sort((a, b) => parseInt(b.match(/\d+/)[0]) - parseInt(a.match(/\d+/)[0]));
