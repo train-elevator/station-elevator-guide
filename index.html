@@ -2894,8 +2894,8 @@
                         exitInfo = directions.some(d => candidate.includes(d)) ? '' : candidate;
                     }
                     
-                    // 「から当駅止まり」をexitInfoから除外
-                    if (exitInfo.includes('から当駅止まり')) {
+                    // 「から当駅止まり」「からの列車」をexitInfoから除外
+                    if (exitInfo.includes('から当駅止まり') || exitInfo.includes('からの列車')) {
                         exitInfo = '';
                     }
                     
