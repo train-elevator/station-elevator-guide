@@ -3120,8 +3120,11 @@
                     opt.rawKey && (stationData[opt.rawKey].line.includes('立川方面からの列車') || 
                                    stationData[opt.rawKey].line.includes('奥多摩方面からの列車')));
                 
+                // 方面グループが複数ある場合も全体注釈を出さない
+                const hasMultipleDirectionGroups = displayGroups.size > 1;
+                
                 let noteText = '';
-                if (!hasGroupedDirections && hasMultipleFormations && allFormationsSet.length === 2) {
+                if (!hasGroupedDirections && !hasMultipleDirectionGroups && hasMultipleFormations && allFormationsSet.length === 2) {
                     allFormationsSet.sort((a, b) => {
                         const numA = parseInt(a.match(/\d+/)[0]);
                         const numB = parseInt(b.match(/\d+/)[0]);
@@ -3204,8 +3207,8 @@
                         
                         html += `<div class="direction-header" style="font-size: 18px; font-weight: 600; color: #667eea; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #667eea; text-align: center;">${displayDirection}</div>`;
                         
-                        // 立川方面グループの場合、複数編成があれば注釈を表示
-                        if (directionInfo === '立川方面からの列車') {
+                        // グループ内に複数編成があれば注釈を表示
+                        {
                             const groupFormations = [...new Set(group.entries.map(e => e.formationInfo).filter(f => f))];
                             if (groupFormations.length >= 2) {
                                 groupFormations.sort((a, b) => parseInt(b.match(/\d+/)[0]) - parseInt(a.match(/\d+/)[0]));
