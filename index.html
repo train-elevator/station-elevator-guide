@@ -2321,17 +2321,17 @@
             // 奥多摩（JC74）
             '奥多摩-ome': { car: 2, line: 'JR青梅線（4両編成）', note: '' },
             // エレベーターなし（JC63〜JC73）
-            '宮ノ平-ome': { car: 1, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
-            '日向和田-ome': { car: 1, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
-            '石神前-ome': { car: 1, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
-            '二俣尾-ome': { car: 1, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
-            '軍畑-ome': { car: 1, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
-            '沢井-ome': { car: 1, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
-            '御嶽-ome': { car: 1, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
-            '川井-ome': { car: 1, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
-            '古里-ome': { car: 1, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
-            '鳩ノ巣-ome': { car: 1, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
-            '白丸-ome': { car: 1, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
+            '宮ノ平-ome': { car: 0, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
+            '日向和田-ome': { car: 0, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
+            '石神前-ome': { car: 0, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
+            '二俣尾-ome': { car: 0, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
+            '軍畑-ome': { car: 0, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
+            '沢井-ome': { car: 0, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
+            '御嶽-ome': { car: 0, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
+            '川井-ome': { car: 0, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
+            '古里-ome': { car: 0, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
+            '鳩ノ巣-ome': { car: 0, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
+            '白丸-ome': { car: 0, line: 'JR青梅線（4両編成）', note: 'エレベーターなし' },
 
 
             // 南武線（JN）
@@ -2883,7 +2883,11 @@
             });
             
             // 結果表示
-            if (carOptions.length === 1) {
+            // car:0はエレベーターなし
+            if (carOptions.length > 0 && carOptions.every(opt => opt.car === 0)) {
+                resultCar.innerHTML = `<div style="font-size: 22px; color: #999; padding: 20px 0;">エレベーターはありません</div>`;
+                resultNote.textContent = '';
+            } else if (carOptions.length === 1) {
                 // 1つの場合はシンプル表示
                 resultCar.innerHTML = `<div class="car-number">${carOptions[0].car}号車</div>`;
                 resultNote.textContent = carOptions[0].note.includes('なし') || carOptions[0].note.includes('EVなし') ? 'エレベーターはありません' : carOptions[0].note;
