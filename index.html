@@ -2886,7 +2886,7 @@
             if (carOptions.length === 1) {
                 // 1つの場合はシンプル表示
                 resultCar.innerHTML = `<div class="car-number">${carOptions[0].car}号車</div>`;
-                resultNote.textContent = carOptions[0].note;
+                resultNote.textContent = carOptions[0].note.includes('なし') || carOptions[0].note.includes('EVなし') ? 'エレベーターはありません' : carOptions[0].note;
             } else {
                 // 新しいレイアウト：編成情報を括弧で表示
                 
@@ -3272,7 +3272,7 @@
                     html += `
                         <div class="car-option">
                             <div class="car-number" style="font-size: 36px; font-weight: 700;">${carDisplay}</div>
-                            ${exitInfo ? `<div class="car-label" style="font-size: 15px;">${exitInfo}</div>` : ''}
+                            ${exitInfo ? `<div class="car-label" style="font-size: 15px;">${exitInfo.includes('なし') || exitInfo.includes('EVなし') ? 'エレベーターはありません' : exitInfo}</div>` : ''}
                         </div>
                     `;
                 });
