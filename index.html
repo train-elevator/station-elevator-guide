@@ -291,7 +291,7 @@
 
             <div class="result" id="result">
                 <div class="result-car" id="result-car"></div>
-                <div class="result-text">に乗ろう！</div>
+                <div class="result-text" id="result-text">に乗ろう！</div>
                 <div class="result-note" id="result-note"></div>
             </div>
         </div>
@@ -2883,10 +2883,12 @@
             });
             
             // 結果表示
+            const resultText = document.getElementById('result-text');
             // car:0はエレベーターなし
             if (carOptions.length > 0 && carOptions.every(opt => opt.car === 0)) {
                 resultCar.innerHTML = `<div style="font-size: 22px; color: #999; padding: 20px 0;">エレベーターはありません</div>`;
                 resultNote.textContent = '';
+                resultText.style.display = 'none';
             } else if (carOptions.length === 1) {
                 // 1つの場合はシンプル表示
                 resultCar.innerHTML = `<div class="car-number">${carOptions[0].car}号車</div>`;
@@ -3286,6 +3288,7 @@
             }
             
             result.classList.add('show');
+            resultText.style.display = '';
             errorMessage.classList.remove('show');
         });
 
