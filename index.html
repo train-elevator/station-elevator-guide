@@ -2347,6 +2347,7 @@
             '鹿島田-nambu-tachikawa': { car: 1, line: 'JR南武線 立川方面', note: '' },
             '平間-nambu': { car: 6, line: 'JR南武線', note: '' },
             '向河原-nambu-tachikawa': { car: 3, line: 'JR南武線 立川方面', note: '' },
+            '向河原-nambu-kawasaki': { car: 0, line: 'JR南武線 川崎方面', note: 'エレベーターなし' },
             '武蔵小杉-nambu-kawasaki-shinsouth': { car: 1, line: 'JR南武線 川崎方面', note: '新南改札（横須賀口）方面' },
             '武蔵小杉-nambu-kawasaki-kita': { car: 4, line: 'JR南武線 川崎方面', note: '北改札（南武口）方面' },
             '武蔵小杉-nambu-tachikawa-shinsouth': { car: 1, line: 'JR南武線 立川方面', note: '新南改札（横須賀口）方面' },
@@ -2359,10 +2360,13 @@
             '津田山-nambu-tachikawa': { car: 5, line: 'JR南武線 立川方面', note: '' },
             '久地-nambu': { car: 6, line: 'JR南武線', note: '' },
             '宿河原-nambu-kawasaki': { car: 2, line: 'JR南武線 川崎方面', note: '' },
+            '宿河原-nambu-tachikawa': { car: 0, line: 'JR南武線 立川方面', note: 'エレベーターなし' },
             '登戸-nambu-kawasaki': { car: 3, line: 'JR南武線 川崎方面', note: '' },
             '登戸-nambu-tachikawa': { car: 4, line: 'JR南武線 立川方面', note: '' },
             '中野島-nambu-kawasaki': { car: 4, line: 'JR南武線 川崎方面', note: '' },
+            '中野島-nambu-tachikawa': { car: 0, line: 'JR南武線 立川方面', note: 'エレベーターなし' },
             '稲田堤-nambu-tachikawa': { car: 6, line: 'JR南武線 立川方面', note: '' },
+            '稲田堤-nambu-kawasaki': { car: 0, line: 'JR南武線 川崎方面', note: 'エレベーターなし' },
             '矢野口-nambu': { car: 4, line: 'JR南武線', note: '' },
             '稲城長沼-nambu': { car: 4, line: 'JR南武線', note: '' },
             '南多摩-nambu': { car: 4, line: 'JR南武線', note: '' },
@@ -2373,6 +2377,7 @@
             '谷保-nambu': { car: 6, line: 'JR南武線', note: '' },
             '矢川-nambu': { car: 1, line: 'JR南武線', note: '' },
             '西国立-nambu-tachikawa': { car: 1, line: 'JR南武線 立川方面', note: '' },
+            '西国立-nambu-kawasaki': { car: 0, line: 'JR南武線 川崎方面', note: 'エレベーターなし' },
             '立川-nambu': { car: 3, line: 'JR南武線', note: '' },
 
             // 武蔵野線（JM）
@@ -3257,6 +3262,16 @@
                         const numB = parseInt(b.formationInfo.match(/\d+/)[0]);
                         return numB - numA;
                     });
+                    
+                    // car:0はエレベーターなし表示
+                    if (entries.every(e => e.car === 0)) {
+                        html += `
+                            <div class="car-option">
+                                <div style="font-size: 18px; color: #999; padding: 15px 0;">エレベーターはありません</div>
+                            </div>
+                        `;
+                        return;
+                    }
                     
                     // 基準号車（最初の項目、通常は15両編成）
                     const mainCar = entries[0].car;
