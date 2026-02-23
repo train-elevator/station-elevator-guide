@@ -3291,7 +3291,9 @@
             }
             
             result.classList.add('show');
-            resultText.classList.remove('hidden');
+            if (!carOptions.every(opt => opt.car === 0)) {
+                resultText.classList.remove('hidden');
+            }
             errorMessage.classList.remove('show');
         });
 
