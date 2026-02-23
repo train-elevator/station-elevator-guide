@@ -2646,6 +2646,7 @@
         const result = document.getElementById('result');
         const resultCar = document.getElementById('result-car');
         const resultNote = document.getElementById('result-note');
+        const resultText = document.getElementById('result-text');
 
         let selectedStation = null;
 
@@ -2886,7 +2887,6 @@
             });
             
             // 結果表示
-            const resultText = document.getElementById('result-text');
             // car:0はエレベーターなし
             if (carOptions.length > 0 && carOptions.every(opt => opt.car === 0)) {
                 resultCar.innerHTML = `<div style="font-size: 22px; color: #999; padding: 20px 0;">エレベーターはありません</div>`;
