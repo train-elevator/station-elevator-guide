@@ -294,7 +294,6 @@
 
             <div class="result" id="result">
                 <div class="result-car" id="result-car"></div>
-                <div class="result-text" id="result-text">に乗ろう！</div>
                 <div class="result-note" id="result-note"></div>
             </div>
         </div>
@@ -2654,7 +2653,6 @@
         const result = document.getElementById('result');
         const resultCar = document.getElementById('result-car');
         const resultNote = document.getElementById('result-note');
-        const resultText = document.getElementById('result-text');
 
         let selectedStation = null;
 
@@ -2899,7 +2897,6 @@
             if (carOptions.length > 0 && carOptions.every(opt => opt.car === 0)) {
                 resultCar.innerHTML = `<div style="font-size: 22px; color: #999; padding: 20px 0;">エレベーターはありません</div>`;
                 resultNote.textContent = '';
-                resultText.classList.add('hidden');
             } else if (carOptions.length === 1) {
                 // 1つの場合はシンプル表示
                 resultCar.innerHTML = `<div class="car-number">${carOptions[0].car}号車</div>`;
@@ -3327,9 +3324,6 @@
             }
             
             result.classList.add('show');
-            if (!carOptions.every(opt => opt.car === 0)) {
-                resultText.classList.remove('hidden');
-            }
             errorMessage.classList.remove('show');
         });
 
