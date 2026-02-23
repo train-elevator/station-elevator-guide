@@ -246,6 +246,9 @@
             color: #333;
             margin-bottom: 15px;
         }
+        .result-text.hidden {
+            display: none !important;
+        }
 
         .result-note {
             font-size: 14px;
@@ -2888,7 +2891,7 @@
             if (carOptions.length > 0 && carOptions.every(opt => opt.car === 0)) {
                 resultCar.innerHTML = `<div style="font-size: 22px; color: #999; padding: 20px 0;">エレベーターはありません</div>`;
                 resultNote.textContent = '';
-                resultText.style.display = 'none';
+                resultText.classList.add('hidden');
             } else if (carOptions.length === 1) {
                 // 1つの場合はシンプル表示
                 resultCar.innerHTML = `<div class="car-number">${carOptions[0].car}号車</div>`;
@@ -3288,7 +3291,7 @@
             }
             
             result.classList.add('show');
-            resultText.style.display = '';
+            resultText.classList.remove('hidden');
             errorMessage.classList.remove('show');
         });
 
