@@ -2721,7 +2721,15 @@
             const lineType = key.split('-')[1]; // yamanote, saikyo, etc.
             
             // 基本路線名を抽出（改札・方面情報を除去）
-            let baseLine = data.line.split('（')[0]; // 「JR埼京線（新南改札方面）」→「JR埼京線」
+            // 「JR埼京線（新南改札方面）」→「JR埼京線」
+            // ただし「JR宇都宮線（宇都宮以北）」のような識別子は保持
+            const identifiers = ['宇都宮以北', '高崎以北'];
+            let baseLine = data.line.split('（')[0];
+            identifiers.forEach(id => {
+                if (data.line.includes('（' + id + '）')) {
+                    baseLine = baseLine + '（' + id + '）';
+                }
+            });
             
             // 方面情報をスペース区切りで除去（例：「JR根岸線 大宮方面」→「JR根岸線」）
             // ただし、番線情報は保持する
