@@ -2808,7 +2808,7 @@
                 <div class="dropdown-item" data-index="${index}">
                     <div class="station-name">${item.station}</div>
                     <div class="line-name">${item.line}</div>
-                    ${desc ? `<div class="line-sub" style="font-size: 11px; color: #999; margin-top: 2px;">${desc.sub}</div>` : ''}
+                    ${desc && desc.sub ? `<div class="line-sub" style="font-size: 11px; color: #999; margin-top: 2px;">${desc.sub}</div>` : ''}
                 </div>
             `}).join('');
 
