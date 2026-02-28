@@ -3129,11 +3129,17 @@
                         if (d.car === 0) {
                             html += `<div class="car-option"><div style="font-size: 18px; color: #999; padding: 10px 0;">エレベーターはありません</div></div>`;
                         } else {
+                            const greenCarLines = ['総武快速線', '横須賀線', '東海道線', '湘南新宿ライン', '宇都宮線', '高崎線', '常磐線'];
+                            const isGreenCarLine = greenCarLines.some(l => (d.line || '').includes(l)) || (d.header || '').includes('総武快速直通');
+                            const carNum = parseInt(d.car);
+                            const isGreenCar = isGreenCarLine && (carNum === 4 || carNum === 5);
                             html += `<div class="car-option">`;
                             if (d.header) {
                                 html += `<div style="font-size: 13px; color: #666; margin-bottom: 4px;">${d.header}</div>`;
                             }
-                            html += `<div class="car-number" style="font-size: 36px; font-weight: 700;">${d.car}号車</div>`;
+                            html += `<div class="car-number" style="font-size: 36px; font-weight: 700;">${d.car}号車`;
+                            if (isGreenCar) html += ` <span style="font-size: 14px; color: #9ACD32;">※グリーン車</span>`;
+                            html += `</div>`;
                             html += `</div>`;
                         }
                     });
